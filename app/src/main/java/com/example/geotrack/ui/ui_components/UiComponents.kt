@@ -97,14 +97,14 @@ fun BottomNavigationBar(navController: NavHostController) {
 
 
 @Composable
-fun ScreenHeader(headerText: String) {
+fun ScreenHeader(headerText: String, modifier: Modifier = Modifier) {
     Text(
         text = headerText,
         fontFamily = robotoFamily,
         fontWeight = FontWeight.Bold,
         color = MaterialTheme.colorScheme.onPrimary,
         fontSize = 22.sp,
-        modifier = Modifier.padding(0.dp, 19.dp)
+        modifier = modifier.padding(vertical = 19.dp)
     )
 }
 
