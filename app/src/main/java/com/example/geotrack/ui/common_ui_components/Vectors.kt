@@ -1,4 +1,4 @@
-package com.example.geotrack.ui.ui_components
+package com.example.geotrack.ui.common_ui_components
 
 
 import androidx.compose.ui.graphics.Color

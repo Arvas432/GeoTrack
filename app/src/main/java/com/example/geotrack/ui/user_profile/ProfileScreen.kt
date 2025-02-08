@@ -1,7 +1,6 @@
 package com.example.geotrack.ui.user_profile
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -26,7 +25,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -38,9 +36,9 @@ import com.bumptech.glide.integration.compose.GlideImage
 import com.example.geotrack.R
 import com.example.geotrack.domain.Route
 import com.example.geotrack.ui.robotoFamily
-import com.example.geotrack.ui.theme.Black14
 import com.example.geotrack.ui.theme.GrayB4
-import com.example.geotrack.ui.ui_components.ScreenHeader
+import com.example.geotrack.ui.common_ui_components.ScreenHeader
+import com.example.geotrack.ui.common_ui_components.ValueWithHeader
 
 @OptIn(ExperimentalGlideComposeApi::class)
 @Preview
@@ -223,25 +221,3 @@ fun RouteListItem(route: Route) {
     }
 }
 
-@Composable
-fun ValueWithHeader(header: String, value: String, modifier: Modifier = Modifier) {
-    Column(
-        modifier = modifier.fillMaxWidth(),
-        horizontalAlignment = Alignment.Start
-    ) {
-        Text(
-            text = header,
-            fontSize = 12.sp,
-            lineHeight = 16.sp,
-            fontWeight = FontWeight.Normal,
-            color = GrayB4,
-        )
-        Text(
-            text = value,
-            fontSize = 18.sp,
-            lineHeight = 26.sp,
-            fontWeight = FontWeight.Medium,
-            color = MaterialTheme.colorScheme.onPrimary,
-        )
-    }
-}

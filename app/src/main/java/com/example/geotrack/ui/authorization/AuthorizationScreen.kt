@@ -19,9 +19,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.geotrack.ui.robotoFamily
 import com.example.geotrack.ui.theme.GrayB4
-import com.example.geotrack.ui.ui_components.DefaultButton
-import com.example.geotrack.ui.ui_components.HintedTextField
-import com.example.geotrack.ui.ui_components.ScreenHeader
+import com.example.geotrack.ui.common_ui_components.DefaultButton
+import com.example.geotrack.ui.common_ui_components.HintedTextField
+import com.example.geotrack.ui.common_ui_components.ScreenHeader
 
 @Composable
 fun LoginScreen() {
