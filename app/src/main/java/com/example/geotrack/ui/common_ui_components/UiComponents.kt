@@ -31,6 +31,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavGraph.Companion.findStartDestination
@@ -123,7 +124,7 @@ fun HintedTextField(
 
     val textStyle = if (text.isEmpty())
         LocalTextStyle.current.merge(
-            color = Black22,
+            color = GrayB4,
             fontFamily = robotoFamily,
             fontWeight = FontWeight.Normal
         )
@@ -165,6 +166,52 @@ fun HintedTextField(
 }
 
 @Composable
+fun HintedLabellessTextField(
+    text: String,
+    hintText: String,
+    onTextChanged: (String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val localTextColor = if (text.isEmpty())
+        MaterialTheme.colorScheme.onPrimary.copy(ContentAlpha.medium)
+    else
+        LocalContentColor.current.copy(LocalContentAlpha.current)
+
+    val textStyle = if (text.isEmpty())
+        LocalTextStyle.current.merge(
+            color = GrayB4,
+            fontFamily = robotoFamily,
+            fontWeight = FontWeight.Normal
+        )
+    else
+        LocalTextStyle.current
+
+    OutlinedTextField(
+        value = text,
+        colors = OutlinedTextFieldDefaults.colors(
+            cursorColor = BlueE7,
+            unfocusedBorderColor = Color.Transparent,
+            focusedBorderColor = Color.Transparent,
+            focusedLabelColor = Color.Transparent,
+            unfocusedLabelColor = Color.Transparent,
+            unfocusedTextColor = localTextColor,
+        ),
+        textStyle = textStyle,
+        visualTransformation = if (text.isEmpty())
+            PlaceholderTransformation(hintText)
+        else VisualTransformation.None,
+        shape = RoundedCornerShape(12.dp),
+        singleLine = true,
+        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+        onValueChange = onTextChanged,
+        modifier = modifier
+            .fillMaxWidth()
+            .background(MaterialTheme.colorScheme.tertiary, RoundedCornerShape(12.dp))
+            .height(65.dp)
+    )
+}
+
+@Composable
 fun DefaultButton(modifier: Modifier = Modifier, text: String, onClick: () -> Unit) {
     Button(
         shape = RoundedCornerShape(12.dp),
@@ -183,6 +230,8 @@ fun DefaultButton(modifier: Modifier = Modifier, text: String, onClick: () -> Un
             color = MaterialTheme.colorScheme.onSecondary,
             fontFamily = robotoFamily,
             fontWeight = FontWeight.SemiBold,
+            overflow = TextOverflow.Ellipsis,
+            maxLines = 1,
             fontSize = 16.sp,
         )
     }
@@ -198,13 +247,18 @@ fun ValueWithHeader(header: String, value: String, modifier: Modifier = Modifier
             text = header,
             fontSize = 12.sp,
             lineHeight = 16.sp,
+            overflow = TextOverflow.Ellipsis,
+            maxLines = 1,
             fontWeight = FontWeight.Normal,
             color = GrayB4,
+            modifier = Modifier.padding(bottom = 5.dp)
         )
         Text(
             text = value,
             fontSize = 18.sp,
             lineHeight = 26.sp,
+            overflow = TextOverflow.Ellipsis,
+            maxLines = 1,
             fontWeight = FontWeight.Medium,
             color = MaterialTheme.colorScheme.onPrimary,
         )

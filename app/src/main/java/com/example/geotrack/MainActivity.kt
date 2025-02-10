@@ -24,6 +24,7 @@ import com.example.geotrack.ui.common_ui_components.BottomNavigationBar
 import com.example.geotrack.ui.common_ui_components.MapPin
 import com.example.geotrack.ui.common_ui_components.Settings
 import com.example.geotrack.ui.common_ui_components.SocialIcon
+import com.example.geotrack.ui.social.RoutesScreen
 import com.example.geotrack.ui.user_profile.ProfileScreen
 
 data class BottomNavigationItem(
@@ -102,8 +103,5 @@ fun TrackingScreen() {
     Text("Экран трекинга")
 }
 
-@Composable
-fun RoutesScreen() {
-    Text("Экран маршрутов")
-}
+
 
