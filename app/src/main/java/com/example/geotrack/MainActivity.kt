@@ -1,6 +1,8 @@
 package com.example.geotrack
 
 import android.os.Bundle
+import android.preference.PreferenceManager
+import android.preference.PreferenceManager.getDefaultSharedPreferences
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -25,7 +27,10 @@ import com.example.geotrack.ui.common_ui_components.MapPin
 import com.example.geotrack.ui.common_ui_components.Settings
 import com.example.geotrack.ui.common_ui_components.SocialIcon
 import com.example.geotrack.ui.social.RoutesScreen
+import com.example.geotrack.ui.tracking.TrackingScreen
 import com.example.geotrack.ui.user_profile.ProfileScreen
+import org.osmdroid.config.Configuration
+import org.osmdroid.library.BuildConfig
 
 data class BottomNavigationItem(
     val label: String = "",
@@ -62,6 +67,8 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        Configuration.getInstance().load(applicationContext, getDefaultSharedPreferences(applicationContext));
+        Configuration.getInstance().userAgentValue = BuildConfig.APPLICATION_ID;
         setContent {
             GeoTrackTheme {
                 MyApp()
@@ -98,10 +105,6 @@ fun SettingsScreen() {
 
 }
 
-@Composable
-fun TrackingScreen() {
-    Text("Экран трекинга")
-}
 
 
 

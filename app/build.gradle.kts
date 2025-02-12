@@ -48,10 +48,19 @@ dependencies {
     implementation(libs.androidx.ui)
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
+
     implementation(libs.androidx.material3)
     implementation(libs.androidx.compose.material)
     implementation(libs.androidx.constraintlayout.compose)
     implementation(libs.compose)
+
+    implementation("org.osmdroid:osmdroid-android:6.1.6")
+    implementation("org.osmdroid:osmdroid-wms:6.1.6")
+    implementation("org.osmdroid:osmdroid-mapsforge:6.1.6")
+    implementation("org.osmdroid:osmdroid-geopackage:6.1.6")
+
+
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

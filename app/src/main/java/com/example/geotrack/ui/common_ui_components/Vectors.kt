@@ -346,3 +346,123 @@ val LikeIcon: ImageVector
 
 @Suppress("ObjectPropertyName")
 private var _LikeIcon: ImageVector? = null
+
+val Pause: ImageVector
+    get() {
+        if (_Pause != null) {
+            return _Pause!!
+        }
+        _Pause = ImageVector.Builder(
+            name = "Pause",
+            defaultWidth = 37.dp,
+            defaultHeight = 44.dp,
+            viewportWidth = 37f,
+            viewportHeight = 44f
+        ).apply {
+            path(fill = SolidColor(Color(0xFFFDFDFD))) {
+                moveTo(24.706f, 43.056f)
+                verticalLineTo(0.278f)
+                horizontalLineTo(36.908f)
+                verticalLineTo(43.056f)
+                horizontalLineTo(24.706f)
+                close()
+                moveTo(0.303f, 43.056f)
+                verticalLineTo(0.278f)
+                horizontalLineTo(12.504f)
+                verticalLineTo(43.056f)
+                horizontalLineTo(0.303f)
+                close()
+            }
+        }.build()
+
+        return _Pause!!
+    }
+
+@Suppress("ObjectPropertyName")
+private var _Pause: ImageVector? = null
+
+val Stop: ImageVector
+    get() {
+        if (_Stop != null) {
+            return _Stop!!
+        }
+        _Stop = ImageVector.Builder(
+            name = "Stop",
+            defaultWidth = 24.dp,
+            defaultHeight = 24.dp,
+            viewportWidth = 24f,
+            viewportHeight = 24f
+        ).apply {
+            path(fill = SolidColor(Color(0xFFFDFDFD))) {
+                moveTo(0f, 0f)
+                horizontalLineToRelative(24f)
+                verticalLineToRelative(24f)
+                horizontalLineToRelative(-24f)
+                close()
+            }
+        }.build()
+
+        return _Stop!!
+    }
+
+@Suppress("ObjectPropertyName")
+private var _Stop: ImageVector? = null
+
+
+val Abandon: ImageVector
+    get() {
+        if (_Abandon != null) {
+            return _Abandon!!
+        }
+        _Abandon = ImageVector.Builder(
+            name = "Abandon",
+            defaultWidth = 28.dp,
+            defaultHeight = 30.dp,
+            viewportWidth = 28f,
+            viewportHeight = 30f
+        ).apply {
+            path(fill = SolidColor(Color(0xFFFDFDFD))) {
+                moveTo(5.667f, 30f)
+                curveTo(4.75f, 30f, 3.965f, 29.674f, 3.312f, 29.021f)
+                curveTo(2.66f, 28.368f, 2.333f, 27.583f, 2.333f, 26.667f)
+                verticalLineTo(5f)
+                horizontalLineTo(0.667f)
+                verticalLineTo(1.667f)
+                horizontalLineTo(9f)
+                verticalLineTo(0f)
+                horizontalLineTo(19f)
+                verticalLineTo(1.667f)
+                horizontalLineTo(27.333f)
+                verticalLineTo(5f)
+                horizontalLineTo(25.667f)
+                verticalLineTo(26.667f)
+                curveTo(25.667f, 27.583f, 25.34f, 28.368f, 24.688f, 29.021f)
+                curveTo(24.035f, 29.674f, 23.25f, 30f, 22.333f, 30f)
+                horizontalLineTo(5.667f)
+                close()
+                moveTo(22.333f, 5f)
+                horizontalLineTo(5.667f)
+                verticalLineTo(26.667f)
+                horizontalLineTo(22.333f)
+                verticalLineTo(5f)
+                close()
+                moveTo(9f, 23.333f)
+                horizontalLineTo(12.333f)
+                verticalLineTo(8.333f)
+                horizontalLineTo(9f)
+                verticalLineTo(23.333f)
+                close()
+                moveTo(15.667f, 23.333f)
+                horizontalLineTo(19f)
+                verticalLineTo(8.333f)
+                horizontalLineTo(15.667f)
+                verticalLineTo(23.333f)
+                close()
+            }
+        }.build()
+
+        return _Abandon!!
+    }
+
+@Suppress("ObjectPropertyName")
+private var _Abandon: ImageVector? = null
