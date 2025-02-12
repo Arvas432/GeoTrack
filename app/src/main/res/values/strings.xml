@@ -1,3 +1,14 @@
 <resources>
     <string name="app_name">GeoTrack</string>
+    <string name="Profile">Профиль</string>
+    <string name="routes_completed">"Маршрутов завершено: "</string>
+    <string name="saved_routes">Маршруты</string>
+    <string name="avg_speed">Средняя скорость</string>
+    <string name="distance">Расстояние</string>
+    <string name="time">Время</string>
+    <string name="likes">Нравится</string>
+    <string name="kmh">" км/ч"</string>
+    <string name="km">" км"</string>
+    <string name="routes_screen">Маршруты</string>
+    <string name="speed">Скорость</string>
 </resources>
