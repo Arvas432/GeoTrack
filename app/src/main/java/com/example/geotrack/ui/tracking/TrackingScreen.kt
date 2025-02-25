@@ -83,6 +83,7 @@ fun TrackingScreen() {
                         isHorizontalMapRepetitionEnabled = false
                         maxZoomLevel = 20.0
                         minZoomLevel = 4.0
+                        setMultiTouchControls(true)
                     }
                 },
                 update = { view ->

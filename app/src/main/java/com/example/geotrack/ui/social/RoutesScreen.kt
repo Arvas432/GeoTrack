@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.sp
 import androidx.constraintlayout.compose.ConstraintLayout
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
+import com.bumptech.glide.integration.compose.placeholder
 import com.example.geotrack.R
 import com.example.geotrack.domain.Post
 import com.example.geotrack.domain.Route
@@ -49,9 +50,9 @@ fun RoutesScreen() {
         mutableStateListOf<Post>(
             Post(
                 1,
-                User(1, "GOOOOL", 23, null), Route(
+                User(1, "Пользователь", 23, null), Route(
                     1,
-                    "GOOOOOOOL",
+                    "Маршрут туда",
                     "10 декабря 2024",
                     10.0F,
                     100.0F,
@@ -108,6 +109,7 @@ fun PostListItem(post: Post) {
         GlideImage(
             model = post.user.profileImageUri,
             contentDescription = "Profile image",
+            failure = placeholder(R.drawable.avatar_placeholder),
             modifier = Modifier
                 .constrainAs(profilePicture) {
                     top.linkTo(parent.top)
@@ -143,6 +145,7 @@ fun PostListItem(post: Post) {
         GlideImage(
             model = post.route.imageUri,
             contentDescription = "Route image",
+            failure = placeholder(R.drawable.map_placeholder),
             modifier = Modifier
                 .constrainAs(postImage) {
                     top.linkTo(parent.top, margin = 14.dp)
