@@ -21,6 +21,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -145,13 +146,16 @@ fun PostListItem(post: Post) {
         GlideImage(
             model = post.route.imageUri,
             contentDescription = "Route image",
+            contentScale = ContentScale.FillBounds,
             failure = placeholder(R.drawable.map_placeholder),
             modifier = Modifier
                 .constrainAs(postImage) {
                     top.linkTo(parent.top, margin = 14.dp)
                     end.linkTo(parent.end, margin = 16.dp)
                     bottom.linkTo(postParameters.top)
+                    start.linkTo(parent.start)
                 }
+            
         )
         Row(verticalAlignment = Alignment.Bottom,
             modifier = Modifier

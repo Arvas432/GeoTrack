@@ -16,6 +16,7 @@ osmdroidAndroidVersion = "(6.1.6)"
 osmdroidGeopackage = "(6.1.6)"
 osmdroidMapsforge = "(6.1.6)"
 osmdroidOsmdroidWms = "(6.1.6)"
+playServicesLocation = "21.3.0"
 playServicesMaps = "19.0.0"
 
 [libraries]
@@ -41,6 +42,7 @@ org-osmdroid-osmdroid-wms = { module = "org.osmdroid:osmdroid-wms", version.ref 
 osmdroid-geopackage = { module = "org.osmdroid:osmdroid-geopackage", version.ref = "osmdroidGeopackage" }
 osmdroid-mapsforge = { module = "org.osmdroid:osmdroid-mapsforge", version.ref = "osmdroidMapsforge" }
 osmdroid-osmdroid-android = { module = "org.osmdroid:osmdroid-android", version.ref = "osmdroidAndroidVersion" }
+play-services-location = { module = "com.google.android.gms:play-services-location", version.ref = "playServicesLocation" }
 play-services-maps = { group = "com.google.android.gms", name = "play-services-maps", version.ref = "playServicesMaps" }
 
 [plugins]

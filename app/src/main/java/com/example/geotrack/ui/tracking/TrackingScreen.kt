@@ -1,5 +1,9 @@
 package com.example.geotrack.ui.tracking
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.graphics.Color
+import android.os.Looper
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -17,6 +21,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -24,11 +30,15 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.constraintlayout.compose.ConstraintLayout
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.geotrack.R
 import com.example.geotrack.ui.common_ui_components.Abandon
 import com.example.geotrack.ui.common_ui_components.Pause
@@ -36,13 +46,48 @@ import com.example.geotrack.ui.common_ui_components.Stop
 import com.example.geotrack.ui.common_ui_components.ValueWithHeader
 import com.example.geotrack.ui.theme.GrayB4
 import com.example.geotrack.ui.theme.GrayEB
+import com.example.geotrack.ui.tracking.viewmodel.TrackingViewModel
 import org.osmdroid.tileprovider.tilesource.XYTileSource
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
+import org.osmdroid.views.overlay.Polyline
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
+import com.google.android.gms.location.LocationCallback
+import com.google.android.gms.location.LocationRequest
+import com.google.android.gms.location.LocationResult
+import com.google.android.gms.location.LocationServices
+import com.google.android.gms.location.Priority
 
 @Preview
 @Composable
 fun TrackingScreen() {
+    val viewModel: TrackingViewModel = viewModel()
+    val context = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
+    val lineColor  = MaterialTheme.colorScheme.secondary.toArgb()
+    var hasLocationPermission by remember { mutableStateOf(false) }
+    val permissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        hasLocationPermission = isGranted
+        if (isGranted) viewModel.startTracking()
+    }
+    LaunchedEffect(Unit) {
+        hasLocationPermission = ContextCompat.checkSelfPermission(
+            context,
+            Manifest.permission.ACCESS_FINE_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED
+
+        if (!hasLocationPermission) {
+            permissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+        } else {
+            viewModel.startTracking()
+        }
+    }
+
+
     Scaffold(
         modifier = Modifier.background(MaterialTheme.colorScheme.primary),
         topBar = {
@@ -59,6 +104,7 @@ fun TrackingScreen() {
         var geoPoint by remember { mutableStateOf(GeoPoint(0.0, 0.0)) }
         ConstraintLayout(modifier = Modifier.padding(paddingValues)) {
             val (map, stopButton, pauseButton, abandonButton) = createRefs()
+            var mapView by remember { mutableStateOf<MapView?>(null) }
 
             AndroidView(
                 modifier = Modifier.constrainAs(map) {
@@ -81,16 +127,33 @@ fun TrackingScreen() {
                             )
                         )
                         isHorizontalMapRepetitionEnabled = false
+                        isVerticalMapRepetitionEnabled = false
                         maxZoomLevel = 20.0
                         minZoomLevel = 4.0
+                        controller.setZoom(10.0)
                         setMultiTouchControls(true)
-                    }
+                    }.also { mapView = it }
                 },
                 update = { view ->
-                    view.controller.setCenter(geoPoint)
-                    view.controller.zoomTo(5.0)
+                    viewModel.geoPoints.lastOrNull()?.let {
+                        view.controller.animateTo(it)
+                    }
+
+                    view.overlays.removeAll { it is Polyline }
+                    val polyline = Polyline().apply {
+                        setPoints(ArrayList(viewModel.geoPoints))
+                        outlinePaint.color = lineColor
+                        outlinePaint.strokeWidth = 12f
+                    }
+                    view.overlays.add(polyline)
+                    view.invalidate()
                 }
             )
+            DisposableEffect(Unit) {
+                mapView?.onResume()
+                onDispose { mapView?.onPause() }
+            }
+
             Box(
                 contentAlignment = Alignment.Center,
                 modifier = Modifier
@@ -160,6 +223,11 @@ fun TrackingScreen() {
         }
 
     }
+    if (hasLocationPermission) {
+        LocationTracker(viewModel)
+    }
+
+
 }
 
 @Composable
@@ -205,5 +273,56 @@ fun RouteParameters(speed: String, distance: String, time: String, modifier: Mod
                 .weight(1F)
                 .padding(start = 5.dp)
         )
+    }
+}
+
+@Composable
+private fun LocationTracker(viewModel: TrackingViewModel) {
+    val context = LocalContext.current
+    val locationClient = remember { LocationServices.getFusedLocationProviderClient(context) }
+
+    DisposableEffect(viewModel.isTracking) {
+        if (viewModel.isTracking) {
+            val hasPermission = ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED
+
+            if (!hasPermission) {
+                return@DisposableEffect onDispose {}
+            }
+
+            val locationRequest = LocationRequest.create().apply {
+                interval = 5000
+                priority = Priority.PRIORITY_HIGH_ACCURACY
+            }
+
+            val locationCallback = object : LocationCallback() {
+                override fun onLocationResult(result: LocationResult) {
+                    result.locations.lastOrNull()?.let { location ->
+                        viewModel.addLocation(
+                            GeoPoint(location.latitude, location.longitude),
+                            location.speed
+                        )
+                    }
+                }
+            }
+
+            try {
+                locationClient.requestLocationUpdates(
+                    locationRequest,
+                    locationCallback,
+                    Looper.getMainLooper()
+                )
+            } catch (e: SecurityException) {
+                e.printStackTrace()
+            }
+
+            onDispose {
+                locationClient.removeLocationUpdates(locationCallback)
+            }
+        } else {
+            onDispose {}
+        }
     }
 }
