@@ -1,6 +1,5 @@
 package com.example.geotrack.ui.tracking.viewmodel
 
-import android.content.Context
 import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
@@ -12,10 +11,6 @@ import com.example.geotrack.domain.tracking.LocationRepository
 import com.example.geotrack.ui.tracking.TrackingEvent
 import com.example.geotrack.ui.tracking.TrackingState
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
 import org.osmdroid.util.GeoPoint
@@ -26,43 +21,34 @@ class TrackingViewModel(
     private val repository: LocationRepository
 ) : ViewModel() {
 
-    private val _state = MutableStateFlow<TrackingState>(TrackingState.Idle)
-    val state: StateFlow<TrackingState> = _state.asStateFlow()
+    private var _state by mutableStateOf<TrackingState>(TrackingState.Idle)
+    val state: TrackingState get() = _state
 
     private var startTime: Long = 0L
     private var pauseOffset: Long = 0L
     private var trackingJob: Job? = null
-
-    init {
-        _state.value = TrackingState.Tracking(
-            speed = "0.0",
-            distance = "0.0",
-            time = "00:00",
-            geoPoints = emptyList(),
-            isPaused = false
-        )
-    }
+    private var locationUpdatesJob: Job? = null
 
     fun processEvent(event: TrackingEvent) {
         when (event) {
-            TrackingEvent.StartTracking -> handleStartTracking()
-            TrackingEvent.TogglePause -> handleTogglePause()
-            TrackingEvent.StopTracking -> handleStopTracking()
-            TrackingEvent.AbandonTracking -> handleAbandonTracking()
+            TrackingEvent.StartTracking -> startTracking()
+            TrackingEvent.TogglePause -> togglePause()
+            TrackingEvent.StopTracking -> stopTracking()
+            TrackingEvent.AbandonTracking -> abandonTracking()
             is TrackingEvent.PermissionResult -> handlePermissionResult(event.granted)
-            is TrackingEvent.LocationUpdate -> handleLocationUpdate(event.geoPoint, event.speed)
+            is TrackingEvent.LocationUpdate -> updateLocation(event.geoPoint, event.speed)
         }
     }
 
-    private fun handleStartTracking() {
-        _state.value = TrackingState.RequestingPermission
+    private fun startTracking() {
+        _state = TrackingState.RequestingPermission
     }
 
     private fun handlePermissionResult(granted: Boolean) {
-        _state.value = if (granted) {
-            startTime = System.currentTimeMillis()
+        if (granted) {
             startLocationUpdates()
-            TrackingState.Tracking(
+            startTime = System.currentTimeMillis()
+            _state = TrackingState.Tracking(
                 speed = "0.0",
                 distance = "0.0",
                 time = "00:00",
@@ -70,87 +56,90 @@ class TrackingViewModel(
                 isPaused = false
             )
         } else {
-            TrackingState.Error("Location permission required")
+            _state = TrackingState.Error("Location permission required")
         }
     }
 
     private fun startLocationUpdates() {
-        trackingJob?.cancel()
-        trackingJob = viewModelScope.launch {
-            try {
-                repository.getLocationUpdates().collect { point ->
-                    processEvent(TrackingEvent.LocationUpdate(point.first, point.second))
+        locationUpdatesJob?.cancel()
+        locationUpdatesJob = viewModelScope.launch {
+            repository.getLocationUpdates()
+                .catch { e ->
+                    _state = TrackingState.Error(e.message ?: "Location tracking error")
                 }
-            } catch (e: SecurityException) {
-                _state.value = TrackingState.Error("Location permissions revoked")
-            }
+                .collect { (geoPoint, speed) ->
+                    processEvent(TrackingEvent.LocationUpdate(geoPoint, speed))
+                }
         }
     }
 
-    private fun handleTogglePause() {
-        val currentState = (_state as? TrackingState.Tracking) ?: return
+    private fun togglePause() {
+        val currentState = _state as? TrackingState.Tracking ?: return
         val isPaused = !currentState.isPaused
 
         if (isPaused) {
             pauseOffset = System.currentTimeMillis() - startTime
-            trackingJob?.cancel()
+            locationUpdatesJob?.cancel()
         } else {
             startTime = System.currentTimeMillis() - pauseOffset
             startLocationUpdates()
         }
 
-        _state.value =  currentState.copy(
-            isPaused = isPaused,
-            time = calculateElapsedTime(currentState)
-        )
+        _state = currentState.copy(isPaused = isPaused)
+        updateTime()
     }
 
-    private fun handleStopTracking() {
+    private fun stopTracking() {
         trackingJob?.cancel()
-        _state.value =  TrackingState.Idle
-        resetTrackingData()
+        locationUpdatesJob?.cancel()
+        _state = TrackingState.Idle
     }
 
-    private fun handleAbandonTracking() {
-        trackingJob?.cancel()
-        _state.value =  TrackingState.Idle
-        resetTrackingData()
+    private fun abandonTracking() {
+        stopTracking()
     }
 
-    private fun handleLocationUpdate(geoPoint: GeoPoint, speed: Float) {
+    private fun updateLocation(geoPoint: GeoPoint, speed: Float) {
         viewModelScope.launch {
-            val currentState = (_state as? TrackingState.Tracking) ?: return@launch
+            val currentState = _state as? TrackingState.Tracking ?: return@launch
             val newPoints = currentState.geoPoints + geoPoint
 
             val distance = repository.calculateDistance(newPoints)
             val formattedDistance = "%.2f".format(distance / 1000)
 
-            _state.value =  currentState.copy(
-                speed = "%.1f".format(speed * 3.6),
-                distance = formattedDistance,
+            _state = currentState.copy(
                 geoPoints = newPoints,
-                time = calculateElapsedTime(currentState)
+                speed = "%.1f".format(speed * 3.6),
+                distance = formattedDistance
             )
+
+            updateTime()
         }
     }
 
-    private fun calculateElapsedTime(state: TrackingState.Tracking): String {
-        val elapsedMillis = if (state.isPaused) pauseOffset
-        else System.currentTimeMillis() - startTime
+    private fun updateTime() {
+        val currentState = _state as? TrackingState.Tracking ?: return
+        val elapsedMillis = if (currentState.isPaused) {
+            pauseOffset
+        } else {
+            System.currentTimeMillis() - startTime
+        }
 
-        val minutes = TimeUnit.MILLISECONDS.toMinutes(elapsedMillis)
+        val hours = TimeUnit.MILLISECONDS.toHours(elapsedMillis)
+        val minutes = TimeUnit.MILLISECONDS.toMinutes(elapsedMillis) % 60
         val seconds = TimeUnit.MILLISECONDS.toSeconds(elapsedMillis) % 60
 
-        return "%02d:%02d".format(minutes, seconds)
-    }
+        val timeString = when {
+            hours > 0 -> String.format("%02d:%02d:%02d", hours, minutes, seconds)
+            else -> String.format("%02d:%02d", minutes, seconds)
+        }
 
-    private fun resetTrackingData() {
-        startTime = 0L
-        pauseOffset = 0L
+        _state = currentState.copy(time = timeString)
     }
 
     override fun onCleared() {
         super.onCleared()
         trackingJob?.cancel()
+        locationUpdatesJob?.cancel()
     }
 }

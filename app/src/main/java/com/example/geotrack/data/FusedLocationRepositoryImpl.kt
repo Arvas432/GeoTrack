@@ -26,21 +26,19 @@ class FusedLocationRepository(
     private val client = LocationServices.getFusedLocationProviderClient(context)
 
     override fun getLocationUpdates(): Flow<Pair<GeoPoint, Float>> = callbackFlow {
-        val request = LocationRequest.create().apply {
-            interval = 5000
-            priority = Priority.PRIORITY_HIGH_ACCURACY
-        }
-
+        val request = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 3000)
+            .setWaitForAccurateLocation(true)
+            .setMinUpdateIntervalMillis(2000)
+            .setMaxUpdateDelayMillis(3000)
+            .build()
         val callback = object : LocationCallback() {
             override fun onLocationResult(result: LocationResult) {
                 result.lastLocation?.let { location ->
                     val geoPoint = GeoPoint(location.latitude, location.longitude)
-                    Log.i("LOCATION", geoPoint.toString())
                     trySend(geoPoint to location.speed)
                 }
             }
         }
-
         if (ContextCompat.checkSelfPermission(
                 context,
                 Manifest.permission.ACCESS_FINE_LOCATION
