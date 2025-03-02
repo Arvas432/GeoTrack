@@ -4,6 +4,7 @@ import android.Manifest
 import android.content.pm.PackageManager
 import android.graphics.Color
 import android.os.Looper
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -53,182 +54,200 @@ import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.Polyline
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Text
 import androidx.core.content.ContextCompat
-import com.google.android.gms.location.LocationCallback
-import com.google.android.gms.location.LocationRequest
-import com.google.android.gms.location.LocationResult
-import com.google.android.gms.location.LocationServices
-import com.google.android.gms.location.Priority
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import org.koin.androidx.compose.koinViewModel
 
 @Preview
 @Composable
 fun TrackingScreen() {
-    val viewModel: TrackingViewModel = viewModel()
+    val viewModel: TrackingViewModel = koinViewModel()
     val context = LocalContext.current
-    val lifecycleOwner = LocalLifecycleOwner.current
-    val lineColor  = MaterialTheme.colorScheme.secondary.toArgb()
-    var hasLocationPermission by remember { mutableStateOf(false) }
+    val state: TrackingState by viewModel.state.collectAsState()
+
     val permissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
-    ) { isGranted ->
-        hasLocationPermission = isGranted
-        if (isGranted) viewModel.startTracking()
+    ) { granted ->
+        viewModel.processEvent(TrackingEvent.PermissionResult(granted))
     }
+
     LaunchedEffect(Unit) {
-        hasLocationPermission = ContextCompat.checkSelfPermission(
-            context,
-            Manifest.permission.ACCESS_FINE_LOCATION
-        ) == PackageManager.PERMISSION_GRANTED
-
-        if (!hasLocationPermission) {
-            permissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
-        } else {
-            viewModel.startTracking()
-        }
+//        if (ContextCompat.checkSelfPermission(
+//                context,
+//                Manifest.permission.ACCESS_FINE_LOCATION
+//            ) != PackageManager.PERMISSION_GRANTED
+//        ) {
+//            permissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+//        } else {
+//            Log.i("LAUNCHED EFFECT", "start tracking")
+//            viewModel.processEvent(TrackingEvent.StartTracking)
+//        }
+        viewModel.processEvent(TrackingEvent.StartTracking)
     }
 
-
-    Scaffold(
-        modifier = Modifier.background(MaterialTheme.colorScheme.primary),
-        topBar = {
-            RouteParameters(
-                "0.0 км/ч",
-                "0 км",
-                "0:00",
-                Modifier
-                    .fillMaxWidth()
-                    .background(MaterialTheme.colorScheme.primary)
-            )
-        }
-    ) { paddingValues ->
-        var geoPoint by remember { mutableStateOf(GeoPoint(0.0, 0.0)) }
-        ConstraintLayout(modifier = Modifier.padding(paddingValues)) {
-            val (map, stopButton, pauseButton, abandonButton) = createRefs()
-            var mapView by remember { mutableStateOf<MapView?>(null) }
-
-            AndroidView(
-                modifier = Modifier.constrainAs(map) {
-                    top.linkTo(parent.top)
-                    bottom.linkTo(parent.bottom)
-                    end.linkTo(parent.end)
-                    start.linkTo(parent.start)
-                },
-                factory = { context ->
-                    MapView(context).apply {
-                        setTileSource(
-                            XYTileSource(
-                                "HttpMapnik",
-                                0, 19, 256, ".png", arrayOf(
-                                    "http://a.tile.openstreetmap.org/",
-                                    "http://b.tile.openstreetmap.org/",
-                                    "http://c.tile.openstreetmap.org/"
-                                ),
-                                "© OpenStreetMap contributors"
-                            )
-                        )
-                        isHorizontalMapRepetitionEnabled = false
-                        isVerticalMapRepetitionEnabled = false
-                        maxZoomLevel = 20.0
-                        minZoomLevel = 4.0
-                        controller.setZoom(10.0)
-                        setMultiTouchControls(true)
-                    }.also { mapView = it }
-                },
-                update = { view ->
-                    viewModel.geoPoints.lastOrNull()?.let {
-                        view.controller.animateTo(it)
-                    }
-
-                    view.overlays.removeAll { it is Polyline }
-                    val polyline = Polyline().apply {
-                        setPoints(ArrayList(viewModel.geoPoints))
-                        outlinePaint.color = lineColor
-                        outlinePaint.strokeWidth = 12f
-                    }
-                    view.overlays.add(polyline)
-                    view.invalidate()
-                }
-            )
-            DisposableEffect(Unit) {
-                mapView?.onResume()
-                onDispose { mapView?.onPause() }
-            }
-
-            Box(
-                contentAlignment = Alignment.Center,
-                modifier = Modifier
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.secondary)
-                    .size(100.dp)
-                    .padding(bottom = 10.dp)
-                    .constrainAs(pauseButton) {
-                        bottom.linkTo(parent.bottom)
-                        start.linkTo(parent.start)
-                        end.linkTo(parent.end)
-                    }
-                    .clickable {
-
-                    }) {
-                Icon(
-                    imageVector = Pause,
-                    contentDescription = "Tracking controls, pause",
-                    tint = MaterialTheme.colorScheme.onSecondary
-                )
-            }
-            Box(
-                contentAlignment = Alignment.Center,
-                modifier = Modifier
-                    .clip(CircleShape)
-                    .size(70.dp)
-                    .background(MaterialTheme.colorScheme.secondary)
-                    .padding(bottom = 25.dp)
-                    .constrainAs(stopButton) {
-                        bottom.linkTo(parent.bottom)
-                        start.linkTo(parent.start)
-                        end.linkTo(pauseButton.start)
-                    }
-                    .clickable {
-
-                    }) {
-                Icon(
-                    imageVector = Stop,
-                    contentDescription = "Tracking controls, finish",
-                    tint = MaterialTheme.colorScheme.onSecondary,
-                    modifier = Modifier.padding(top = 20.dp)
-                )
-            }
-            Box(
-                contentAlignment = Alignment.Center,
-                modifier = Modifier
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.secondary)
-                    .size(70.dp)
-                    .padding(bottom = 25.dp)
-                    .constrainAs(abandonButton) {
-                        bottom.linkTo(parent.bottom)
-                        start.linkTo(pauseButton.end)
-                        end.linkTo(parent.end)
-                    }
-                    .clickable {
-
-                    }) {
-                Icon(
-                    imageVector = Abandon,
-                    contentDescription = "Tracking controls, abandon",
-                    tint = MaterialTheme.colorScheme.onSecondary,
-                    modifier = Modifier.padding(top = 20.dp)
-                )
-            }
-
-        }
-
+    when (val currentState = state) {
+        is TrackingState.Tracking -> TrackingContent(
+            state = currentState,
+            onPauseResume = { viewModel.processEvent(TrackingEvent.TogglePause) },
+            onStop = { viewModel.processEvent(TrackingEvent.StopTracking) },
+            onAbandon = { viewModel.processEvent(TrackingEvent.AbandonTracking) }
+        )
+        is TrackingState.Error -> ErrorState(message = currentState.message)
+        TrackingState.Idle -> IdleState { viewModel.processEvent(TrackingEvent.StartTracking) }
+        TrackingState.RequestingPermission -> LoadingState()
     }
-    if (hasLocationPermission) {
-        LocationTracker(viewModel)
-    }
-
-
+    Log.i("Current state", state.toString())
 }
+//
+//
+//    Scaffold(
+//        modifier = Modifier.background(MaterialTheme.colorScheme.primary),
+//        topBar = {
+//            RouteParameters(
+//                "0.0 км/ч",
+//                "0 км",
+//                "0:00",
+//                Modifier
+//                    .fillMaxWidth()
+//                    .background(MaterialTheme.colorScheme.primary)
+//            )
+//        }
+//    ) { paddingValues ->
+//        var geoPoint by remember { mutableStateOf(GeoPoint(0.0, 0.0)) }
+//        ConstraintLayout(modifier = Modifier.padding(paddingValues)) {
+//            val (map, stopButton, pauseButton, abandonButton) = createRefs()
+//            var mapView by remember { mutableStateOf<MapView?>(null) }
+//
+//            AndroidView(
+//                modifier = Modifier.constrainAs(map) {
+//                    top.linkTo(parent.top)
+//                    bottom.linkTo(parent.bottom)
+//                    end.linkTo(parent.end)
+//                    start.linkTo(parent.start)
+//                },
+//                factory = { context ->
+//                    MapView(context).apply {
+//                        setTileSource(
+//                            XYTileSource(
+//                                "HttpMapnik",
+//                                0, 19, 256, ".png", arrayOf(
+//                                    "http://a.tile.openstreetmap.org/",
+//                                    "http://b.tile.openstreetmap.org/",
+//                                    "http://c.tile.openstreetmap.org/"
+//                                ),
+//                                "© OpenStreetMap contributors"
+//                            )
+//                        )
+//                        isHorizontalMapRepetitionEnabled = false
+//                        isVerticalMapRepetitionEnabled = false
+//                        maxZoomLevel = 20.0
+//                        minZoomLevel = 4.0
+//                        controller.setZoom(10.0)
+//                        setMultiTouchControls(true)
+//                    }.also { mapView = it }
+//                },
+//                update = { view ->
+//                    viewModel.geoPoints.lastOrNull()?.let {
+//                        view.controller.animateTo(it)
+//                    }
+//
+//                    view.overlays.removeAll { it is Polyline }
+//                    val polyline = Polyline().apply {
+//                        setPoints(ArrayList(viewModel.geoPoints))
+//                        outlinePaint.color = lineColor
+//                        outlinePaint.strokeWidth = 12f
+//                    }
+//                    view.overlays.add(polyline)
+//                    view.invalidate()
+//                }
+//            )
+//            DisposableEffect(Unit) {
+//                mapView?.onResume()
+//                onDispose { mapView?.onPause() }
+//            }
+//
+//            Box(
+//                contentAlignment = Alignment.Center,
+//                modifier = Modifier
+//                    .clip(CircleShape)
+//                    .background(MaterialTheme.colorScheme.secondary)
+//                    .size(100.dp)
+//                    .padding(bottom = 10.dp)
+//                    .constrainAs(pauseButton) {
+//                        bottom.linkTo(parent.bottom)
+//                        start.linkTo(parent.start)
+//                        end.linkTo(parent.end)
+//                    }
+//                    .clickable {
+//
+//                    }) {
+//                Icon(
+//                    imageVector = Pause,
+//                    contentDescription = "Tracking controls, pause",
+//                    tint = MaterialTheme.colorScheme.onSecondary
+//                )
+//            }
+//            Box(
+//                contentAlignment = Alignment.Center,
+//                modifier = Modifier
+//                    .clip(CircleShape)
+//                    .size(70.dp)
+//                    .background(MaterialTheme.colorScheme.secondary)
+//                    .padding(bottom = 25.dp)
+//                    .constrainAs(stopButton) {
+//                        bottom.linkTo(parent.bottom)
+//                        start.linkTo(parent.start)
+//                        end.linkTo(pauseButton.start)
+//                    }
+//                    .clickable {
+//
+//                    }) {
+//                Icon(
+//                    imageVector = Stop,
+//                    contentDescription = "Tracking controls, finish",
+//                    tint = MaterialTheme.colorScheme.onSecondary,
+//                    modifier = Modifier.padding(top = 20.dp)
+//                )
+//            }
+//            Box(
+//                contentAlignment = Alignment.Center,
+//                modifier = Modifier
+//                    .clip(CircleShape)
+//                    .background(MaterialTheme.colorScheme.secondary)
+//                    .size(70.dp)
+//                    .padding(bottom = 25.dp)
+//                    .constrainAs(abandonButton) {
+//                        bottom.linkTo(parent.bottom)
+//                        start.linkTo(pauseButton.end)
+//                        end.linkTo(parent.end)
+//                    }
+//                    .clickable {
+//
+//                    }) {
+//                Icon(
+//                    imageVector = Abandon,
+//                    contentDescription = "Tracking controls, abandon",
+//                    tint = MaterialTheme.colorScheme.onSecondary,
+//                    modifier = Modifier.padding(top = 20.dp)
+//                )
+//            }
+//
+//        }
+//
+//    }
+//    if (hasLocationPermission) {
+//        LocationTracker(viewModel)
+//    }
+//
+//
+//}
 
 @Composable
 fun RouteParameters(speed: String, distance: String, time: String, modifier: Modifier = Modifier) {
@@ -277,52 +296,215 @@ fun RouteParameters(speed: String, distance: String, time: String, modifier: Mod
 }
 
 @Composable
-private fun LocationTracker(viewModel: TrackingViewModel) {
-    val context = LocalContext.current
-    val locationClient = remember { LocationServices.getFusedLocationProviderClient(context) }
-
-    DisposableEffect(viewModel.isTracking) {
-        if (viewModel.isTracking) {
-            val hasPermission = ContextCompat.checkSelfPermission(
-                context,
-                Manifest.permission.ACCESS_FINE_LOCATION
-            ) == PackageManager.PERMISSION_GRANTED
-
-            if (!hasPermission) {
-                return@DisposableEffect onDispose {}
-            }
-
-            val locationRequest = LocationRequest.create().apply {
-                interval = 5000
-                priority = Priority.PRIORITY_HIGH_ACCURACY
-            }
-
-            val locationCallback = object : LocationCallback() {
-                override fun onLocationResult(result: LocationResult) {
-                    result.locations.lastOrNull()?.let { location ->
-                        viewModel.addLocation(
-                            GeoPoint(location.latitude, location.longitude),
-                            location.speed
-                        )
-                    }
-                }
-            }
-
-            try {
-                locationClient.requestLocationUpdates(
-                    locationRequest,
-                    locationCallback,
-                    Looper.getMainLooper()
-                )
-            } catch (e: SecurityException) {
-                e.printStackTrace()
-            }
-
-            onDispose {
-                locationClient.removeLocationUpdates(locationCallback)
-            }
-        } else {
-            onDispose {}
+private fun TrackingContent(
+    state: TrackingState.Tracking,
+    onPauseResume: () -> Unit,
+    onStop: () -> Unit,
+    onAbandon: () -> Unit
+) {
+    Scaffold(
+        topBar = {
+            RouteParameters(
+                speed = state.speed,
+                distance = state.distance,
+                time = state.time
+            )
+        },
+        modifier = Modifier.fillMaxSize()
+    ) { padding ->
+        Box(
+            modifier = Modifier
+                .padding(padding)
+                .fillMaxSize()
+        ) {
+            MapViewComponent(geoPoints = state.geoPoints)
+            ControlsPanel(
+                isPaused = state.isPaused,
+                onPauseResume = onPauseResume,
+                onStop = onStop,
+                onAbandon = onAbandon
+            )
         }
     }
 }
+
+@Composable
+fun ControlsPanel(
+    onPauseResume: () -> Unit,
+    onStop: () -> Unit,
+    onAbandon: () -> Unit,
+    isPaused: Boolean
+) {
+    Box(modifier = Modifier.fillMaxSize()) {
+        ConstraintLayout(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(100.dp)
+                .align(Alignment.BottomCenter)
+        ) {
+            val (pauseButton, stopButton, abandonButton) = createRefs()
+
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.secondary)
+                    .size(70.dp)
+                    .constrainAs(pauseButton) {
+                        bottom.linkTo(parent.bottom)
+                        start.linkTo(parent.start)
+                        end.linkTo(parent.end)
+                    }
+                    .clickable { onPauseResume() }
+            ) {
+                Icon(
+                    imageVector = if (isPaused) Icons.Default.PlayArrow else Pause,
+                    contentDescription = if (isPaused) "Resume" else "Pause",
+                    tint = MaterialTheme.colorScheme.onSecondary,
+                    modifier = Modifier.size(30.dp)
+                )
+            }
+
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.secondary)
+                    .size(56.dp)
+                    .constrainAs(stopButton) {
+                        bottom.linkTo(pauseButton.top, margin = 16.dp)
+                        start.linkTo(pauseButton.start)
+                        end.linkTo(pauseButton.end)
+                    }
+                    .clickable { onStop() }
+            ) {
+                Icon(
+                    imageVector = Stop,
+                    contentDescription = "Stop",
+                    tint = MaterialTheme.colorScheme.onSecondary,
+                    modifier = Modifier.size(24.dp)
+                )
+            }
+
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.error)
+                    .size(56.dp)
+                    .constrainAs(abandonButton) {
+                        bottom.linkTo(pauseButton.top, margin = 16.dp)
+                        end.linkTo(parent.end, margin = 32.dp)
+                    }
+                    .clickable { onAbandon() }
+            ) {
+                Icon(
+                    imageVector = Abandon,
+                    contentDescription = "Abandon",
+                    tint = MaterialTheme.colorScheme.onError,
+                    modifier = Modifier.size(24.dp)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun MapViewComponent(geoPoints: List<GeoPoint>) {
+    var mapView by remember { mutableStateOf<MapView?>(null) }
+    val lineColorCode = MaterialTheme.colorScheme.secondary.toArgb()
+
+    AndroidView(
+        factory = { context ->
+            MapView(context).apply {
+                setupBaseMap()
+            }.also { mapView = it }
+        },
+        update = { view ->
+            updateMapView(view, lineColorCode, geoPoints)
+        }
+    )
+
+    DisposableEffect(Unit) {
+        mapView?.onResume()
+        onDispose {
+            mapView?.onPause()
+            mapView?.overlays?.clear()
+        }
+    }
+}
+
+private fun MapView.setupBaseMap() {
+    setTileSource(
+        XYTileSource(
+            "Mapnik",
+            0,
+            19,
+            256,
+            ".png",
+            arrayOf(
+                "https://a.tile.openstreetmap.org/",
+                "https://b.tile.openstreetmap.org/",
+                "https://c.tile.openstreetmap.org/"
+            )
+        )
+    )
+    isHorizontalMapRepetitionEnabled = false
+    isVerticalMapRepetitionEnabled = false
+    maxZoomLevel = 20.0
+    minZoomLevel = 4.0
+    controller.setZoom(10.0)
+    setMultiTouchControls(true)
+}
+
+private fun updateMapView(mapView: MapView, lineColor: Int, geoPoints: List<GeoPoint>) {
+    mapView.overlays.removeAll { it is Polyline }
+
+    if (geoPoints.isNotEmpty()) {
+        val polyline = Polyline().apply {
+            setPoints(ArrayList(geoPoints))
+            outlinePaint.color = lineColor
+            outlinePaint.strokeWidth = 12f
+        }
+        mapView.overlays.add(polyline)
+        mapView.controller.animateTo(geoPoints.last())
+    }
+
+    mapView.invalidate()
+}
+@Composable
+private fun LoadingState() {
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        CircularProgressIndicator()
+    }
+}
+
+@Composable
+private fun ErrorState(message: String) {
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = message,
+            color = MaterialTheme.colorScheme.error,
+            style = MaterialTheme.typography.bodyLarge
+        )
+    }
+}
+
+@Composable
+private fun IdleState(onStartClick: () -> Unit) {
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        Button(onClick = onStartClick) {
+            Text("Начать трекинг")
+        }
+    }
+}
+

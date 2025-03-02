@@ -1,6 +1,10 @@
 package com.example.geotrack
 
 import android.app.Application
+import com.example.geotrack.di.repositoryModule
+import com.example.geotrack.di.viewModelModule
+import org.koin.android.ext.koin.androidContext
+import org.koin.core.context.startKoin
 import org.osmdroid.config.Configuration
 import java.io.File
 
@@ -13,5 +17,9 @@ class App: Application() {
         osmConf.osmdroidBasePath = basePath
         val tileCache = File(osmConf.osmdroidBasePath.absolutePath, "tile")
         osmConf.osmdroidTileCache = tileCache
+        startKoin {
+            androidContext(this@App)
+            modules(repositoryModule, viewModelModule)
+        }
     }
 }

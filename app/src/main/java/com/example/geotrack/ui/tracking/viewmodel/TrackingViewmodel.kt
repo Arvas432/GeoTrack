@@ -1,105 +1,156 @@
 package com.example.geotrack.ui.tracking.viewmodel
 
+import android.content.Context
 import androidx.compose.runtime.State
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.example.geotrack.domain.tracking.LocationRepository
+import com.example.geotrack.ui.tracking.TrackingEvent
+import com.example.geotrack.ui.tracking.TrackingState
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.launch
 import org.osmdroid.util.GeoPoint
+import java.util.concurrent.TimeUnit
 
 
-class TrackingViewModel : ViewModel() {
-    // Регистрируемые точки маршрута
-    private val _geoPoints = mutableStateListOf<GeoPoint>()
-    val geoPoints: List<GeoPoint> get() = _geoPoints
+class TrackingViewModel(
+    private val repository: LocationRepository
+) : ViewModel() {
 
-    // Текущая скорость (в км/ч)
-    private val _currentSpeed = mutableStateOf("0.0")
-    val currentSpeed = mutableStateOf("0.0 км/ч")
+    private val _state = MutableStateFlow<TrackingState>(TrackingState.Idle)
+    val state: StateFlow<TrackingState> = _state.asStateFlow()
 
-    // Общая дистанция (в км)
-    private val _totalDistance = mutableStateOf("0.0")
-    val totalDistance = mutableStateOf("0 км")
-
-    // Прошедшее время (формат MM:SS)
-    private val _elapsedTime = mutableStateOf("0:00")
-    val elapsedTime = mutableStateOf("0:00")
-
-    // Состояние паузы
-    private val _isPaused = mutableStateOf(false)
-    val isPaused: Boolean get() = _isPaused.value
-
-    // Флаг активности трекинга
-    private val _isTracking = mutableStateOf(false)
-    val isTracking: Boolean get() = _isTracking.value
-
-    // Тайминг
     private var startTime: Long = 0L
     private var pauseOffset: Long = 0L
+    private var trackingJob: Job? = null
 
-    fun addLocation(point: GeoPoint, speed: Float) {
-        if (!_isPaused.value) {
-            _geoPoints.add(point)
-            updateSpeed(speed)
-            calculateTotalDistance()
-            updateElapsedTime()
+    init {
+        _state.value = TrackingState.Tracking(
+            speed = "0.0",
+            distance = "0.0",
+            time = "00:00",
+            geoPoints = emptyList(),
+            isPaused = false
+        )
+    }
+
+    fun processEvent(event: TrackingEvent) {
+        when (event) {
+            TrackingEvent.StartTracking -> handleStartTracking()
+            TrackingEvent.TogglePause -> handleTogglePause()
+            TrackingEvent.StopTracking -> handleStopTracking()
+            TrackingEvent.AbandonTracking -> handleAbandonTracking()
+            is TrackingEvent.PermissionResult -> handlePermissionResult(event.granted)
+            is TrackingEvent.LocationUpdate -> handleLocationUpdate(event.geoPoint, event.speed)
         }
     }
 
-    fun togglePause() {
-        _isPaused.value = !_isPaused.value
-        updateTimers()
+    private fun handleStartTracking() {
+        _state.value = TrackingState.RequestingPermission
     }
 
-    fun startTracking() {
-        _isTracking.value = true
-        startTime = System.currentTimeMillis()
-    }
-
-    fun stopTracking() {
-        _isTracking.value = false
-        resetAll()
-    }
-
-    private fun updateSpeed(speed: Float) {
-        val kmhSpeed = speed * 3.6f
-        _currentSpeed.value = "%.1f".format(kmhSpeed)
-        currentSpeed.value = "${_currentSpeed.value} км/ч"
-    }
-
-    private fun calculateTotalDistance() {
-        var distanceMeters = 0.0
-        for (i in 1 until _geoPoints.size) {
-            distanceMeters += _geoPoints[i-1].distanceToAsDouble(_geoPoints[i])
-        }
-        _totalDistance.value = "%.2f".format(distanceMeters / 1000)
-        totalDistance.value = "${_totalDistance.value} км"
-    }
-
-    private fun updateElapsedTime() {
-        val currentTime = if (_isPaused.value) pauseOffset else System.currentTimeMillis() - startTime
-        val minutes = (currentTime / 1000) / 60
-        val seconds = (currentTime / 1000) % 60
-        _elapsedTime.value = "%d:%02d".format(minutes, seconds)
-        elapsedTime.value = _elapsedTime.value
-    }
-
-    private fun updateTimers() {
-        when {
-            _isPaused.value -> pauseOffset = System.currentTimeMillis() - startTime
-            else -> startTime = System.currentTimeMillis() - pauseOffset
+    private fun handlePermissionResult(granted: Boolean) {
+        _state.value = if (granted) {
+            startTime = System.currentTimeMillis()
+            startLocationUpdates()
+            TrackingState.Tracking(
+                speed = "0.0",
+                distance = "0.0",
+                time = "00:00",
+                geoPoints = emptyList(),
+                isPaused = false
+            )
+        } else {
+            TrackingState.Error("Location permission required")
         }
     }
 
-    private fun resetAll() {
-        _geoPoints.clear()
-        _currentSpeed.value = "0.0"
-        _totalDistance.value = "0.0"
-        _elapsedTime.value = "0:00"
-        currentSpeed.value = "0.0 км/ч"
-        totalDistance.value = "0 км"
-        elapsedTime.value = "0:00"
+    private fun startLocationUpdates() {
+        trackingJob?.cancel()
+        trackingJob = viewModelScope.launch {
+            repository.getLocationUpdates()
+                .catch { e ->
+                    _state.value =  TrackingState.Error(e.message ?: "Location tracking error")
+                }
+                .collect { (geoPoint, speed) ->
+                    processEvent(TrackingEvent.LocationUpdate(geoPoint, speed))
+                }
+        }
+    }
+
+    private fun handleTogglePause() {
+        val currentState = (_state as? TrackingState.Tracking) ?: return
+        val isPaused = !currentState.isPaused
+
+        if (isPaused) {
+            pauseOffset = System.currentTimeMillis() - startTime
+            trackingJob?.cancel()
+        } else {
+            startTime = System.currentTimeMillis() - pauseOffset
+            startLocationUpdates()
+        }
+
+        _state.value =  currentState.copy(
+            isPaused = isPaused,
+            time = calculateElapsedTime(currentState)
+        )
+    }
+
+    private fun handleStopTracking() {
+        trackingJob?.cancel()
+        _state.value =  TrackingState.Idle
+        resetTrackingData()
+    }
+
+    private fun handleAbandonTracking() {
+        trackingJob?.cancel()
+        _state.value =  TrackingState.Idle
+        resetTrackingData()
+    }
+
+    private fun handleLocationUpdate(geoPoint: GeoPoint, speed: Float) {
+        viewModelScope.launch {
+            val currentState = (_state as? TrackingState.Tracking) ?: return@launch
+            val newPoints = currentState.geoPoints + geoPoint
+
+            val distance = repository.calculateDistance(newPoints)
+            val formattedDistance = "%.2f".format(distance / 1000)
+
+            _state.value =  currentState.copy(
+                speed = "%.1f".format(speed * 3.6),
+                distance = formattedDistance,
+                geoPoints = newPoints,
+                time = calculateElapsedTime(currentState)
+            )
+        }
+    }
+
+    private fun calculateElapsedTime(state: TrackingState.Tracking): String {
+        val elapsedMillis = if (state.isPaused) pauseOffset
+        else System.currentTimeMillis() - startTime
+
+        val minutes = TimeUnit.MILLISECONDS.toMinutes(elapsedMillis)
+        val seconds = TimeUnit.MILLISECONDS.toSeconds(elapsedMillis) % 60
+
+        return "%02d:%02d".format(minutes, seconds)
+    }
+
+    private fun resetTrackingData() {
         startTime = 0L
         pauseOffset = 0L
-        _isPaused.value = false
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        trackingJob?.cancel()
     }
 }
