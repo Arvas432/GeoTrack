@@ -77,13 +77,13 @@ class TrackingViewModel(
     private fun startLocationUpdates() {
         trackingJob?.cancel()
         trackingJob = viewModelScope.launch {
-            repository.getLocationUpdates()
-                .catch { e ->
-                    _state.value =  TrackingState.Error(e.message ?: "Location tracking error")
+            try {
+                repository.getLocationUpdates().collect { point ->
+                    processEvent(TrackingEvent.LocationUpdate(point.first, point.second))
                 }
-                .collect { (geoPoint, speed) ->
-                    processEvent(TrackingEvent.LocationUpdate(geoPoint, speed))
-                }
+            } catch (e: SecurityException) {
+                _state.value = TrackingState.Error("Location permissions revoked")
+            }
         }
     }
 

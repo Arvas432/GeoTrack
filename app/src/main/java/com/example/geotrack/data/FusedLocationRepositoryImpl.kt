@@ -4,8 +4,10 @@ import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Looper
+import android.util.Log
 import androidx.core.content.ContextCompat
 import com.example.geotrack.domain.tracking.LocationRepository
+import com.example.geotrack.ui.authorization.LoginScreen
 import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationResult
@@ -33,6 +35,7 @@ class FusedLocationRepository(
             override fun onLocationResult(result: LocationResult) {
                 result.lastLocation?.let { location ->
                     val geoPoint = GeoPoint(location.latitude, location.longitude)
+                    Log.i("LOCATION", geoPoint.toString())
                     trySend(geoPoint to location.speed)
                 }
             }
@@ -65,3 +68,4 @@ class FusedLocationRepository(
         }
     }
 }
+

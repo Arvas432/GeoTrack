@@ -79,16 +79,16 @@ fun TrackingScreen() {
     }
 
     LaunchedEffect(Unit) {
-//        if (ContextCompat.checkSelfPermission(
-//                context,
-//                Manifest.permission.ACCESS_FINE_LOCATION
-//            ) != PackageManager.PERMISSION_GRANTED
-//        ) {
-//            permissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
-//        } else {
-//            Log.i("LAUNCHED EFFECT", "start tracking")
-//            viewModel.processEvent(TrackingEvent.StartTracking)
-//        }
+        if (ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            viewModel.processEvent(TrackingEvent.PermissionResult(true))
+        } else {
+            Log.i("LAUNCHED EFFECT", "start tracking")
+            viewModel.processEvent(TrackingEvent.StartTracking)
+        }
         viewModel.processEvent(TrackingEvent.StartTracking)
     }
 
@@ -99,9 +99,15 @@ fun TrackingScreen() {
             onStop = { viewModel.processEvent(TrackingEvent.StopTracking) },
             onAbandon = { viewModel.processEvent(TrackingEvent.AbandonTracking) }
         )
+
         is TrackingState.Error -> ErrorState(message = currentState.message)
         TrackingState.Idle -> IdleState { viewModel.processEvent(TrackingEvent.StartTracking) }
-        TrackingState.RequestingPermission -> LoadingState()
+        TrackingState.RequestingPermission -> {
+            LaunchedEffect(Unit) {
+                permissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+            }
+            LoadingState()
+        }
     }
     Log.i("Current state", state.toString())
 }
@@ -437,16 +443,13 @@ private fun MapViewComponent(geoPoints: List<GeoPoint>) {
 private fun MapView.setupBaseMap() {
     setTileSource(
         XYTileSource(
-            "Mapnik",
-            0,
-            19,
-            256,
-            ".png",
-            arrayOf(
-                "https://a.tile.openstreetmap.org/",
-                "https://b.tile.openstreetmap.org/",
-                "https://c.tile.openstreetmap.org/"
-            )
+            "HttpMapnik",
+            0, 19, 256, ".png", arrayOf(
+                "http://a.tile.openstreetmap.org/",
+                "http://b.tile.openstreetmap.org/",
+                "http://c.tile.openstreetmap.org/"
+            ),
+            "© OpenStreetMap contributors"
         )
     )
     isHorizontalMapRepetitionEnabled = false
@@ -472,6 +475,7 @@ private fun updateMapView(mapView: MapView, lineColor: Int, geoPoints: List<GeoP
 
     mapView.invalidate()
 }
+
 @Composable
 private fun LoadingState() {
     Box(
