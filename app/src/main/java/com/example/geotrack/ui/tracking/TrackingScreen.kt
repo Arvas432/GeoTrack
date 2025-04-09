@@ -53,6 +53,8 @@ import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.Polyline
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.runtime.collectAsState
 import androidx.core.content.ContextCompat
 import com.example.geotrack.ui.tracking.state.TrackingIntent
@@ -93,9 +95,9 @@ fun TrackingScreen(viewModel: TrackingViewModel = koinViewModel()) {
         modifier = Modifier.background(MaterialTheme.colorScheme.primary),
         topBar = {
             RouteParameters(
-                "0.0 км/ч",
-                "0 км",
-                "0:00",
+                state.currentSpeed,
+                state.totalDistance,
+                state.elapsedTime,
                 Modifier
                     .fillMaxWidth()
                     .background(MaterialTheme.colorScheme.primary)
@@ -167,12 +169,18 @@ fun TrackingScreen(viewModel: TrackingViewModel = koinViewModel()) {
                         end.linkTo(parent.end)
                     }
                     .clickable {
-                        viewModel.processIntent(TrackingIntent.StartTracking)
+                        if (!state.isTracking) {
+                            viewModel.processIntent(TrackingIntent.StartTracking)
+                        } else {
+                            viewModel.processIntent(TrackingIntent.TogglePause)
+                        }
+
                     }) {
                 Icon(
-                    imageVector = Pause,
+                    imageVector = if (state.isPaused) Icons.Filled.PlayArrow else Pause,
                     contentDescription = "Tracking controls, pause",
-                    tint = MaterialTheme.colorScheme.onSecondary
+                    tint = MaterialTheme.colorScheme.onSecondary,
+                    modifier = Modifier.size(48.dp)
                 )
             }
             Box(
@@ -210,7 +218,7 @@ fun TrackingScreen(viewModel: TrackingViewModel = koinViewModel()) {
                         end.linkTo(parent.end)
                     }
                     .clickable {
-
+                         viewModel.processIntent(TrackingIntent.StopTracking)
                     }) {
                 Icon(
                     imageVector = Abandon,

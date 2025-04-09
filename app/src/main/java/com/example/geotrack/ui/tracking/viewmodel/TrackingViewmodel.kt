@@ -6,6 +6,7 @@ import com.example.geotrack.domain.routeTracking.GeoRepository
 import com.example.geotrack.ui.tracking.state.TrackingIntent
 import com.example.geotrack.ui.tracking.state.TrackingState
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -24,12 +25,14 @@ class TrackingViewModel(
     private var startTime: Long = 0L
     private var pauseOffset: Long = 0L
     private var locationJob: Job? = null
+    private var timerJob: Job? = null
 
     fun processIntent(intent: TrackingIntent) {
         when (intent) {
             TrackingIntent.StartTracking -> startTracking()
             TrackingIntent.StopTracking -> stopTracking()
             TrackingIntent.TogglePause -> togglePause()
+            TrackingIntent.AbandonTracking -> abandonTracking()
             is TrackingIntent.UpdateLocation -> updateState(intent.point, intent.speed)
         }
     }
@@ -54,6 +57,20 @@ class TrackingViewModel(
         locationJob?.cancel()
     }
 
+    private fun abandonTracking() {
+        _state.update {
+            it.copy(
+                isTracking = false,
+                geoPoints = emptyList(),
+                currentSpeed = "0.0 км/ч",
+                totalDistance = "0 км",
+                elapsedTime = "0:00"
+            )
+        }
+        resetTimers()
+        locationJob?.cancel()
+        timerJob?.cancel()
+    }
     private fun startLocationUpdates() {
         locationJob = viewModelScope.launch {
             repository.getLocationUpdates()
@@ -66,6 +83,16 @@ class TrackingViewModel(
                         )
                     )
                 }
+        }
+        timerJob = viewModelScope.launch {
+            while(state.value.isTracking) {
+                delay(1000)
+                _state.update {
+                    it.copy(
+                        elapsedTime = calculateElapsedTime()
+                    )
+                }
+            }
         }
     }
 
@@ -85,7 +112,6 @@ class TrackingViewModel(
                     geoPoints = newPoints,
                     currentSpeed = newSpeed,
                     totalDistance = newDistance,
-                    elapsedTime = calculateElapsedTime()
                 )
             }
         }
