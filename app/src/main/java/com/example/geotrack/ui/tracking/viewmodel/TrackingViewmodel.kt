@@ -1,105 +1,122 @@
 package com.example.geotrack.ui.tracking.viewmodel
 
-import androidx.compose.runtime.State
-import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.example.geotrack.domain.routeTracking.GeoRepository
+import com.example.geotrack.ui.tracking.state.TrackingIntent
+import com.example.geotrack.ui.tracking.state.TrackingState
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import org.osmdroid.util.GeoPoint
 
 
-class TrackingViewModel : ViewModel() {
-    // Регистрируемые точки маршрута
-    private val _geoPoints = mutableStateListOf<GeoPoint>()
-    val geoPoints: List<GeoPoint> get() = _geoPoints
+class TrackingViewModel(
+    private val repository: GeoRepository
+) : ViewModel() {
+    private val _state = MutableStateFlow(TrackingState())
+    val state: StateFlow<TrackingState> = _state.asStateFlow()
 
-    // Текущая скорость (в км/ч)
-    private val _currentSpeed = mutableStateOf("0.0")
-    val currentSpeed = mutableStateOf("0.0 км/ч")
-
-    // Общая дистанция (в км)
-    private val _totalDistance = mutableStateOf("0.0")
-    val totalDistance = mutableStateOf("0 км")
-
-    // Прошедшее время (формат MM:SS)
-    private val _elapsedTime = mutableStateOf("0:00")
-    val elapsedTime = mutableStateOf("0:00")
-
-    // Состояние паузы
-    private val _isPaused = mutableStateOf(false)
-    val isPaused: Boolean get() = _isPaused.value
-
-    // Флаг активности трекинга
-    private val _isTracking = mutableStateOf(false)
-    val isTracking: Boolean get() = _isTracking.value
-
-    // Тайминг
     private var startTime: Long = 0L
     private var pauseOffset: Long = 0L
+    private var locationJob: Job? = null
 
-    fun addLocation(point: GeoPoint, speed: Float) {
-        if (!_isPaused.value) {
-            _geoPoints.add(point)
-            updateSpeed(speed)
-            calculateTotalDistance()
-            updateElapsedTime()
+    fun processIntent(intent: TrackingIntent) {
+        when (intent) {
+            TrackingIntent.StartTracking -> startTracking()
+            TrackingIntent.StopTracking -> stopTracking()
+            TrackingIntent.TogglePause -> togglePause()
+            is TrackingIntent.UpdateLocation -> updateState(intent.point, intent.speed)
         }
     }
 
-    fun togglePause() {
-        _isPaused.value = !_isPaused.value
+    private fun startTracking() {
+        _state.update { it.copy(isTracking = true) }
+        startTime = System.currentTimeMillis()
+        startLocationUpdates()
+    }
+
+    private fun stopTracking() {
+        _state.update {
+            it.copy(
+                isTracking = false,
+                geoPoints = emptyList(),
+                currentSpeed = "0.0 км/ч",
+                totalDistance = "0 км",
+                elapsedTime = "0:00"
+            )
+        }
+        resetTimers()
+        locationJob?.cancel()
+    }
+
+    private fun startLocationUpdates() {
+        locationJob = viewModelScope.launch {
+            repository.getLocationUpdates()
+                .catch { e -> /* Handle error */ }
+                .collect { location ->
+                    processIntent(
+                        TrackingIntent.UpdateLocation(
+                            GeoPoint(location.latitude, location.longitude),
+                            location.speed
+                        )
+                    )
+                }
+        }
+    }
+
+    private fun togglePause() {
+        _state.update { it.copy(isPaused = !it.isPaused) }
         updateTimers()
     }
 
-    fun startTracking() {
-        _isTracking.value = true
-        startTime = System.currentTimeMillis()
-    }
+    private fun updateState(point: GeoPoint, speed: Float) {
+        if (!_state.value.isPaused) {
+            val newPoints = _state.value.geoPoints + point
+            val newSpeed = "%.1f км/ч".format(speed * 3.6f)
+            val newDistance = calculateTotalDistance(newPoints)
 
-    fun stopTracking() {
-        _isTracking.value = false
-        resetAll()
-    }
-
-    private fun updateSpeed(speed: Float) {
-        val kmhSpeed = speed * 3.6f
-        _currentSpeed.value = "%.1f".format(kmhSpeed)
-        currentSpeed.value = "${_currentSpeed.value} км/ч"
-    }
-
-    private fun calculateTotalDistance() {
-        var distanceMeters = 0.0
-        for (i in 1 until _geoPoints.size) {
-            distanceMeters += _geoPoints[i-1].distanceToAsDouble(_geoPoints[i])
+            _state.update {
+                it.copy(
+                    geoPoints = newPoints,
+                    currentSpeed = newSpeed,
+                    totalDistance = newDistance,
+                    elapsedTime = calculateElapsedTime()
+                )
+            }
         }
-        _totalDistance.value = "%.2f".format(distanceMeters / 1000)
-        totalDistance.value = "${_totalDistance.value} км"
     }
 
-    private fun updateElapsedTime() {
-        val currentTime = if (_isPaused.value) pauseOffset else System.currentTimeMillis() - startTime
+    private fun calculateTotalDistance(points: List<GeoPoint>): String {
+        if (points.size < 2) return "0 км"
+        var distance = 0.0
+        for (i in 1 until points.size) {
+            distance += points[i-1].distanceToAsDouble(points[i])
+        }
+        return "%.2f км".format(distance / 1000)
+    }
+
+    private fun calculateElapsedTime(): String {
+        val currentTime = if (_state.value.isPaused) pauseOffset else System.currentTimeMillis() - startTime
         val minutes = (currentTime / 1000) / 60
         val seconds = (currentTime / 1000) % 60
-        _elapsedTime.value = "%d:%02d".format(minutes, seconds)
-        elapsedTime.value = _elapsedTime.value
+        return "%d:%02d".format(minutes, seconds)
     }
 
     private fun updateTimers() {
-        when {
-            _isPaused.value -> pauseOffset = System.currentTimeMillis() - startTime
-            else -> startTime = System.currentTimeMillis() - pauseOffset
+        if (_state.value.isPaused) {
+            pauseOffset = System.currentTimeMillis() - startTime
+        } else {
+            startTime = System.currentTimeMillis() - pauseOffset
         }
     }
 
-    private fun resetAll() {
-        _geoPoints.clear()
-        _currentSpeed.value = "0.0"
-        _totalDistance.value = "0.0"
-        _elapsedTime.value = "0:00"
-        currentSpeed.value = "0.0 км/ч"
-        totalDistance.value = "0 км"
-        elapsedTime.value = "0:00"
+    private fun resetTimers() {
         startTime = 0L
         pauseOffset = 0L
-        _isPaused.value = false
     }
 }

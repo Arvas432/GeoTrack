@@ -53,18 +53,21 @@ import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.Polyline
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.runtime.collectAsState
 import androidx.core.content.ContextCompat
+import com.example.geotrack.ui.tracking.state.TrackingIntent
 import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
+import org.koin.androidx.compose.koinViewModel
 
 @Preview
 @Composable
-fun TrackingScreen() {
-    val viewModel: TrackingViewModel = viewModel()
+fun TrackingScreen(viewModel: TrackingViewModel = koinViewModel()) {
     val context = LocalContext.current
+    val state by viewModel.state.collectAsState()
     val lifecycleOwner = LocalLifecycleOwner.current
     val lineColor  = MaterialTheme.colorScheme.secondary.toArgb()
     var hasLocationPermission by remember { mutableStateOf(false) }
@@ -72,7 +75,7 @@ fun TrackingScreen() {
         ActivityResultContracts.RequestPermission()
     ) { isGranted ->
         hasLocationPermission = isGranted
-        if (isGranted) viewModel.startTracking()
+        if (isGranted) viewModel.processIntent(TrackingIntent.StartTracking)
     }
     LaunchedEffect(Unit) {
         hasLocationPermission = ContextCompat.checkSelfPermission(
@@ -82,8 +85,6 @@ fun TrackingScreen() {
 
         if (!hasLocationPermission) {
             permissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
-        } else {
-            viewModel.startTracking()
         }
     }
 
@@ -101,7 +102,6 @@ fun TrackingScreen() {
             )
         }
     ) { paddingValues ->
-        var geoPoint by remember { mutableStateOf(GeoPoint(0.0, 0.0)) }
         ConstraintLayout(modifier = Modifier.padding(paddingValues)) {
             val (map, stopButton, pauseButton, abandonButton) = createRefs()
             var mapView by remember { mutableStateOf<MapView?>(null) }
@@ -135,13 +135,13 @@ fun TrackingScreen() {
                     }.also { mapView = it }
                 },
                 update = { view ->
-                    viewModel.geoPoints.lastOrNull()?.let {
+                    state.geoPoints.lastOrNull()?.let {
                         view.controller.animateTo(it)
                     }
 
                     view.overlays.removeAll { it is Polyline }
                     val polyline = Polyline().apply {
-                        setPoints(ArrayList(viewModel.geoPoints))
+                        setPoints(ArrayList(state.geoPoints))
                         outlinePaint.color = lineColor
                         outlinePaint.strokeWidth = 12f
                     }
@@ -167,7 +167,7 @@ fun TrackingScreen() {
                         end.linkTo(parent.end)
                     }
                     .clickable {
-
+                        viewModel.processIntent(TrackingIntent.StartTracking)
                     }) {
                 Icon(
                     imageVector = Pause,
@@ -223,11 +223,6 @@ fun TrackingScreen() {
         }
 
     }
-    if (hasLocationPermission) {
-        LocationTracker(viewModel)
-    }
-
-
 }
 
 @Composable
@@ -273,56 +268,5 @@ fun RouteParameters(speed: String, distance: String, time: String, modifier: Mod
                 .weight(1F)
                 .padding(start = 5.dp)
         )
-    }
-}
-
-@Composable
-private fun LocationTracker(viewModel: TrackingViewModel) {
-    val context = LocalContext.current
-    val locationClient = remember { LocationServices.getFusedLocationProviderClient(context) }
-
-    DisposableEffect(viewModel.isTracking) {
-        if (viewModel.isTracking) {
-            val hasPermission = ContextCompat.checkSelfPermission(
-                context,
-                Manifest.permission.ACCESS_FINE_LOCATION
-            ) == PackageManager.PERMISSION_GRANTED
-
-            if (!hasPermission) {
-                return@DisposableEffect onDispose {}
-            }
-
-            val locationRequest = LocationRequest.create().apply {
-                interval = 5000
-                priority = Priority.PRIORITY_HIGH_ACCURACY
-            }
-
-            val locationCallback = object : LocationCallback() {
-                override fun onLocationResult(result: LocationResult) {
-                    result.locations.lastOrNull()?.let { location ->
-                        viewModel.addLocation(
-                            GeoPoint(location.latitude, location.longitude),
-                            location.speed
-                        )
-                    }
-                }
-            }
-
-            try {
-                locationClient.requestLocationUpdates(
-                    locationRequest,
-                    locationCallback,
-                    Looper.getMainLooper()
-                )
-            } catch (e: SecurityException) {
-                e.printStackTrace()
-            }
-
-            onDispose {
-                locationClient.removeLocationUpdates(locationCallback)
-            }
-        } else {
-            onDispose {}
-        }
     }
 }
