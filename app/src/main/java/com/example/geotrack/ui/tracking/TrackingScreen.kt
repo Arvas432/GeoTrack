@@ -2,8 +2,6 @@ package com.example.geotrack.ui.tracking
 
 import android.Manifest
 import android.content.pm.PackageManager
-import android.graphics.Color
-import android.os.Looper
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -16,7 +14,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -38,17 +35,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.lifecycle.compose.LocalLifecycleOwner
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.geotrack.R
 import com.example.geotrack.ui.common_ui_components.Abandon
 import com.example.geotrack.ui.common_ui_components.Pause
 import com.example.geotrack.ui.common_ui_components.Stop
 import com.example.geotrack.ui.common_ui_components.ValueWithHeader
 import com.example.geotrack.ui.theme.GrayB4
-import com.example.geotrack.ui.theme.GrayEB
 import com.example.geotrack.ui.tracking.viewmodel.TrackingViewModel
 import org.osmdroid.tileprovider.tilesource.XYTileSource
-import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.Polyline
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -58,11 +52,6 @@ import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.runtime.collectAsState
 import androidx.core.content.ContextCompat
 import com.example.geotrack.ui.tracking.state.TrackingIntent
-import com.google.android.gms.location.LocationCallback
-import com.google.android.gms.location.LocationRequest
-import com.google.android.gms.location.LocationResult
-import com.google.android.gms.location.LocationServices
-import com.google.android.gms.location.Priority
 import org.koin.androidx.compose.koinViewModel
 
 @Preview
@@ -177,7 +166,7 @@ fun TrackingScreen(viewModel: TrackingViewModel = koinViewModel()) {
 
                     }) {
                 Icon(
-                    imageVector = if (state.isPaused) Icons.Filled.PlayArrow else Pause,
+                    imageVector = if (!state.isPaused) Pause else Icons.Filled.PlayArrow,
                     contentDescription = "Tracking controls, pause",
                     tint = MaterialTheme.colorScheme.onSecondary,
                     modifier = Modifier.size(48.dp)
@@ -196,7 +185,7 @@ fun TrackingScreen(viewModel: TrackingViewModel = koinViewModel()) {
                         end.linkTo(pauseButton.start)
                     }
                     .clickable {
-
+                        viewModel.processIntent(TrackingIntent.StopTracking)
                     }) {
                 Icon(
                     imageVector = Stop,

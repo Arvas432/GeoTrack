@@ -3,6 +3,8 @@ package com.example.geotrack.ui.tracking.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.geotrack.domain.routeTracking.GeoRepository
+import com.example.geotrack.domain.routeTracking.TrackInteractor
+import com.example.geotrack.domain.routeTracking.model.GpxPoint
 import com.example.geotrack.ui.tracking.state.TrackingIntent
 import com.example.geotrack.ui.tracking.state.TrackingState
 import kotlinx.coroutines.Job
@@ -17,12 +19,14 @@ import org.osmdroid.util.GeoPoint
 
 
 class TrackingViewModel(
-    private val repository: GeoRepository
+    private val repository: GeoRepository,
+    private val trackInteractor: TrackInteractor
 ) : ViewModel() {
     private val _state = MutableStateFlow(TrackingState())
     val state: StateFlow<TrackingState> = _state.asStateFlow()
-
+    private var gpxPoints: MutableList<GpxPoint> = mutableListOf()
     private var startTime: Long = 0L
+    private var endTime: Long = 0L
     private var pauseOffset: Long = 0L
     private var locationJob: Job? = null
     private var timerJob: Job? = null
@@ -44,17 +48,7 @@ class TrackingViewModel(
     }
 
     private fun stopTracking() {
-        _state.update {
-            it.copy(
-                isTracking = false,
-                geoPoints = emptyList(),
-                currentSpeed = "0.0 км/ч",
-                totalDistance = "0 км",
-                elapsedTime = "0:00"
-            )
-        }
-        resetTimers()
-        locationJob?.cancel()
+        saveTrack()
     }
 
     private fun abandonTracking() {
@@ -70,6 +64,7 @@ class TrackingViewModel(
         resetTimers()
         locationJob?.cancel()
         timerJob?.cancel()
+        gpxPoints.clear()
     }
     private fun startLocationUpdates() {
         locationJob = viewModelScope.launch {
@@ -82,6 +77,7 @@ class TrackingViewModel(
                             location.speed
                         )
                     )
+                    gpxPoints.add(GpxPoint(location.latitude, location.longitude, location.time))
                 }
         }
         timerJob = viewModelScope.launch {
@@ -117,6 +113,28 @@ class TrackingViewModel(
         }
     }
 
+    private fun saveTrack() {
+        viewModelScope.launch {
+            val points = _state.value.geoPoints
+            if (points.isNotEmpty()) {
+                trackInteractor.saveTrack(gpxPoints = gpxPoints, geoPoints = points, startTime = startTime, endTime = endTime)
+            }
+            timerJob?.cancel()
+            gpxPoints.clear()
+            resetTimers()
+            locationJob?.cancel()
+            _state.update {
+                it.copy(
+                    isTracking = false,
+                    geoPoints = emptyList(),
+                    currentSpeed = "0.0 км/ч",
+                    totalDistance = "0 км",
+                    elapsedTime = "0:00"
+                )
+            }
+        }
+    }
+
     private fun calculateTotalDistance(points: List<GeoPoint>): String {
         if (points.size < 2) return "0 км"
         var distance = 0.0
@@ -124,6 +142,12 @@ class TrackingViewModel(
             distance += points[i-1].distanceToAsDouble(points[i])
         }
         return "%.2f км".format(distance / 1000)
+    }
+
+    private fun calculateAverageSpeed(distanceKm: Double, durationMs: Long): Double {
+        if (durationMs == 0L) return 0.0
+        val hours = durationMs.toDouble() / 1000 / 3600
+        return distanceKm / hours
     }
 
     private fun calculateElapsedTime(): String {

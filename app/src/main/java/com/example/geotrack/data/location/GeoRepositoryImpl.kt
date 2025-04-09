@@ -1,4 +1,4 @@
-package com.example.geotrack.data
+package com.example.geotrack.data.location
 
 import android.content.Context
 import android.location.Location
