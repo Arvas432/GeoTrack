@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    kotlin("kapt")
 }
 
 android {
@@ -49,8 +50,7 @@ dependencies {
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.play.services.location)
-    implementation("androidx.activity:activity-compose:1.10.1")
-    implementation("io.insert-koin:koin-core:3.5.0")
+    implementation(libs.androidx.activity.compose.v1101)
 
     implementation("io.insert-koin:koin-android:3.5.0")
     implementation("io.insert-koin:koin-androidx-compose:3.5.0")
@@ -64,11 +64,18 @@ dependencies {
     implementation(libs.androidx.compose.material)
     implementation(libs.androidx.constraintlayout.compose)
     implementation(libs.compose)
+    implementation(libs.koin.core)
+    implementation(libs.koin.android)
+    implementation(libs.koin.androidx.compose)
 
-    implementation("org.osmdroid:osmdroid-android:6.1.6")
-    implementation("org.osmdroid:osmdroid-wms:6.1.6")
-    implementation("org.osmdroid:osmdroid-mapsforge:6.1.6")
-    implementation("org.osmdroid:osmdroid-geopackage:6.1.6")
+    implementation(libs.osmdroid.android.v616)
+    implementation(libs.osmdroid.wms.v616)
+    implementation(libs.osmdroid.mapsforge.v616)
+    implementation(libs.osmdroid.geopackage.v616)
+
+    implementation(libs.androidx.room.runtime)
+    kapt(libs.androidx.room.compiler)
+    implementation(libs.androidx.room.ktx)
 
 
 
