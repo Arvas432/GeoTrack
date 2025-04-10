@@ -8,6 +8,7 @@ import org.osmdroid.config.Configuration
 import java.io.File
 
 
+
 class App: Application() {
     override fun onCreate() {
         super.onCreate()
@@ -20,9 +21,5 @@ class App: Application() {
         osmConf.osmdroidBasePath = basePath
         val tileCache = File(osmConf.osmdroidBasePath.absolutePath, "tile")
         osmConf.osmdroidTileCache = tileCache
-        startKoin {
-            androidContext(this@App)
-            modules(repositoryModule, viewModelModule)
-        }
     }
 }

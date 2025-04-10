@@ -33,7 +33,6 @@ class TrackingViewModel(
     private var pauseOffset: Long = 0L
     private var locationJob: Job? = null
     private var timerJob: Job? = null
-
     fun processIntent(intent: TrackingIntent) {
         when (intent) {
             TrackingIntent.StartTracking -> startTracking()
