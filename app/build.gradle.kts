@@ -52,7 +52,13 @@ dependencies {
     implementation(libs.play.services.location)
     implementation(libs.androidx.activity.compose.v1101)
 
-
+    implementation("io.insert-koin:koin-android:3.5.0")
+    implementation("io.insert-koin:koin-androidx-compose:3.5.0")
+    implementation("androidx.compose.runtime:runtime:1.6.0")
+    implementation("androidx.compose.runtime:runtime-livedata:1.6.0")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.7.0")
+    implementation("androidx.lifecycle:lifecycle-runtime-compose:2.7.0")
+    implementation("androidx.compose.runtime:runtime:1.6.0")
 
     implementation(libs.androidx.material3)
     implementation(libs.androidx.compose.material)

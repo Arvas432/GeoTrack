@@ -1,5 +1,6 @@
 package com.example.geotrack.ui.tracking.viewmodel
 
+
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.geotrack.domain.routeTracking.GeoRepository
@@ -16,6 +17,7 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.osmdroid.util.GeoPoint
+import java.util.concurrent.TimeUnit
 
 
 class TrackingViewModel(
@@ -25,6 +27,7 @@ class TrackingViewModel(
     private val _state = MutableStateFlow(TrackingState())
     val state: StateFlow<TrackingState> = _state.asStateFlow()
     private var gpxPoints: MutableList<GpxPoint> = mutableListOf()
+
     private var startTime: Long = 0L
     private var endTime: Long = 0L
     private var pauseOffset: Long = 0L
@@ -169,4 +172,5 @@ class TrackingViewModel(
         startTime = 0L
         pauseOffset = 0L
     }
+
 }

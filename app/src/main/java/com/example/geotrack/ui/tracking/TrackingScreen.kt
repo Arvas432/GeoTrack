@@ -56,6 +56,7 @@ import org.koin.androidx.compose.koinViewModel
 
 @Preview
 @Composable
+
 fun TrackingScreen(viewModel: TrackingViewModel = koinViewModel()) {
     val context = LocalContext.current
     val state by viewModel.state.collectAsState()
@@ -68,17 +69,21 @@ fun TrackingScreen(viewModel: TrackingViewModel = koinViewModel()) {
         hasLocationPermission = isGranted
         if (isGranted) viewModel.processIntent(TrackingIntent.StartTracking)
     }
-    LaunchedEffect(Unit) {
-        hasLocationPermission = ContextCompat.checkSelfPermission(
-            context,
-            Manifest.permission.ACCESS_FINE_LOCATION
-        ) == PackageManager.PERMISSION_GRANTED
+
 
         if (!hasLocationPermission) {
             permissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
         }
+        viewModel.processEvent(TrackingEvent.StartTracking)
     }
 
+    when (val currentState = state) {
+        is TrackingState.Tracking -> TrackingContent(
+            state = currentState,
+            onPauseResume = { viewModel.processEvent(TrackingEvent.TogglePause) },
+            onStop = { viewModel.processEvent(TrackingEvent.StopTracking) },
+            onAbandon = { viewModel.processEvent(TrackingEvent.AbandonTracking) }
+        )
 
     Scaffold(
         modifier = Modifier.background(MaterialTheme.colorScheme.primary),
@@ -215,11 +220,12 @@ fun TrackingScreen(viewModel: TrackingViewModel = koinViewModel()) {
                     tint = MaterialTheme.colorScheme.onSecondary,
                     modifier = Modifier.padding(top = 20.dp)
                 )
+
             }
-
+            LoadingState()
         }
-
     }
+
 }
 
 @Composable

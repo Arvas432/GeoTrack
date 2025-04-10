@@ -20,5 +20,9 @@ class App: Application() {
         osmConf.osmdroidBasePath = basePath
         val tileCache = File(osmConf.osmdroidBasePath.absolutePath, "tile")
         osmConf.osmdroidTileCache = tileCache
+        startKoin {
+            androidContext(this@App)
+            modules(repositoryModule, viewModelModule)
+        }
     }
 }
