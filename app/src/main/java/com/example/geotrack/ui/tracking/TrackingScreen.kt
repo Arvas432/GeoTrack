@@ -1,5 +1,7 @@
 package com.example.geotrack.ui.tracking
 
+import android.Manifest
+import android.content.pm.PackageManager
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -12,11 +14,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -24,41 +27,75 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.constraintlayout.compose.ConstraintLayout
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.example.geotrack.R
 import com.example.geotrack.ui.common_ui_components.Abandon
 import com.example.geotrack.ui.common_ui_components.Pause
 import com.example.geotrack.ui.common_ui_components.Stop
 import com.example.geotrack.ui.common_ui_components.ValueWithHeader
 import com.example.geotrack.ui.theme.GrayB4
-import com.example.geotrack.ui.theme.GrayEB
+import com.example.geotrack.ui.tracking.viewmodel.TrackingViewModel
 import org.osmdroid.tileprovider.tilesource.XYTileSource
-import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
+import org.osmdroid.views.overlay.Polyline
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.runtime.collectAsState
+import androidx.core.content.ContextCompat
+import com.example.geotrack.ui.tracking.state.TrackingIntent
+import org.koin.androidx.compose.koinViewModel
 
 @Preview
 @Composable
-fun TrackingScreen() {
+fun TrackingScreen(viewModel: TrackingViewModel = koinViewModel()) {
+    val context = LocalContext.current
+    val state by viewModel.state.collectAsState()
+    val lifecycleOwner = LocalLifecycleOwner.current
+    val lineColor  = MaterialTheme.colorScheme.secondary.toArgb()
+    var hasLocationPermission by remember { mutableStateOf(false) }
+    val permissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        hasLocationPermission = isGranted
+        if (isGranted) viewModel.processIntent(TrackingIntent.StartTracking)
+    }
+    LaunchedEffect(Unit) {
+        hasLocationPermission = ContextCompat.checkSelfPermission(
+            context,
+            Manifest.permission.ACCESS_FINE_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED
+
+        if (!hasLocationPermission) {
+            permissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+        }
+    }
+
+
     Scaffold(
         modifier = Modifier.background(MaterialTheme.colorScheme.primary),
         topBar = {
             RouteParameters(
-                "0.0 км/ч",
-                "0 км",
-                "0:00",
+                state.currentSpeed,
+                state.totalDistance,
+                state.elapsedTime,
                 Modifier
                     .fillMaxWidth()
                     .background(MaterialTheme.colorScheme.primary)
             )
         }
     ) { paddingValues ->
-        var geoPoint by remember { mutableStateOf(GeoPoint(0.0, 0.0)) }
         ConstraintLayout(modifier = Modifier.padding(paddingValues)) {
             val (map, stopButton, pauseButton, abandonButton) = createRefs()
+            var mapView by remember { mutableStateOf<MapView?>(null) }
 
             AndroidView(
                 modifier = Modifier.constrainAs(map) {
@@ -81,15 +118,33 @@ fun TrackingScreen() {
                             )
                         )
                         isHorizontalMapRepetitionEnabled = false
+                        isVerticalMapRepetitionEnabled = false
                         maxZoomLevel = 20.0
                         minZoomLevel = 4.0
-                    }
+                        controller.setZoom(10.0)
+                        setMultiTouchControls(true)
+                    }.also { mapView = it }
                 },
                 update = { view ->
-                    view.controller.setCenter(geoPoint)
-                    view.controller.zoomTo(5.0)
+                    state.geoPoints.lastOrNull()?.let {
+                        view.controller.animateTo(it)
+                    }
+
+                    view.overlays.removeAll { it is Polyline }
+                    val polyline = Polyline().apply {
+                        setPoints(ArrayList(state.geoPoints))
+                        outlinePaint.color = lineColor
+                        outlinePaint.strokeWidth = 12f
+                    }
+                    view.overlays.add(polyline)
+                    view.invalidate()
                 }
             )
+            DisposableEffect(Unit) {
+                mapView?.onResume()
+                onDispose { mapView?.onPause() }
+            }
+
             Box(
                 contentAlignment = Alignment.Center,
                 modifier = Modifier
@@ -103,12 +158,18 @@ fun TrackingScreen() {
                         end.linkTo(parent.end)
                     }
                     .clickable {
+                        if (!state.isTracking) {
+                            viewModel.processIntent(TrackingIntent.StartTracking)
+                        } else {
+                            viewModel.processIntent(TrackingIntent.TogglePause)
+                        }
 
                     }) {
                 Icon(
-                    imageVector = Pause,
+                    imageVector = if (!state.isPaused) Pause else Icons.Filled.PlayArrow,
                     contentDescription = "Tracking controls, pause",
-                    tint = MaterialTheme.colorScheme.onSecondary
+                    tint = MaterialTheme.colorScheme.onSecondary,
+                    modifier = Modifier.size(48.dp)
                 )
             }
             Box(
@@ -124,7 +185,7 @@ fun TrackingScreen() {
                         end.linkTo(pauseButton.start)
                     }
                     .clickable {
-
+                        viewModel.processIntent(TrackingIntent.StopTracking)
                     }) {
                 Icon(
                     imageVector = Stop,
@@ -146,7 +207,7 @@ fun TrackingScreen() {
                         end.linkTo(parent.end)
                     }
                     .clickable {
-
+                         viewModel.processIntent(TrackingIntent.StopTracking)
                     }) {
                 Icon(
                     imageVector = Abandon,

@@ -1,5 +1,6 @@
 package com.example.geotrack.ui.user_profile
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -33,6 +34,8 @@ import androidx.compose.ui.unit.sp
 import androidx.constraintlayout.compose.ConstraintLayout
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
+import com.bumptech.glide.integration.compose.Placeholder
+import com.bumptech.glide.integration.compose.placeholder
 import com.example.geotrack.R
 import com.example.geotrack.domain.Route
 import com.example.geotrack.ui.robotoFamily
@@ -51,7 +54,7 @@ fun ProfileScreen() {
         mutableStateListOf<Route>(
             Route(
                 1,
-                "GOOOOOOOL",
+                "От туда в туда",
                 "10 декабря 2024",
                 10.0F,
                 100.0F,
@@ -70,6 +73,7 @@ fun ProfileScreen() {
             GlideImage(
                 model = profileImageUrl,
                 contentDescription = "Profile image",
+                failure = placeholder(R.drawable.avatar_placeholder),
                 modifier = Modifier
                     .constrainAs(profileImage) {
                         top.linkTo(parent.top)
@@ -179,6 +183,7 @@ fun RouteListItem(route: Route) {
         GlideImage(
             model = route.imageUri,
             contentDescription = "Route image",
+            failure = placeholder(R.drawable.map_placeholder),
             modifier = Modifier
                 .constrainAs(routeImage) {
                     top.linkTo(parent.top, margin = 14.dp)

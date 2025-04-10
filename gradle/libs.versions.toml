@@ -1,27 +1,41 @@
 [versions]
+activityComposeVersion = "1.10.1"
 agp = "8.7.3"
 compose = "1.0.0-beta01"
-constraintlayoutCompose = "1.1.0"
+constraintlayoutCompose = "1.1.1"
+koinAndroid = "3.5.0"
+koinAndroidxCompose = "3.5.0"
+koinCore = "3.5.0"
 kotlin = "2.0.0"
-coreKtx = "1.15.0"
+coreKtx = "1.16.0"
 junit = "4.13.2"
 junitVersion = "1.2.1"
 espressoCore = "3.6.1"
 lifecycleRuntimeKtx = "2.8.7"
-activityCompose = "1.10.0"
-composeBom = "2024.04.01"
-navigationCompose = "2.8.1"
-composeMaterial = "1.4.0"
+activityCompose = "1.10.1"
+composeBom = "2025.04.00"
+navigationCompose = "2.8.9"
+composeMaterial = "1.4.1"
+osmdroidAndroid = "6.1.6"
 osmdroidAndroidVersion = "(6.1.6)"
 osmdroidGeopackage = "(6.1.6)"
+osmdroidGeopackageVersion = "6.1.6"
 osmdroidMapsforge = "(6.1.6)"
+osmdroidMapsforgeVersion = "6.1.6"
 osmdroidOsmdroidWms = "(6.1.6)"
-playServicesMaps = "19.0.0"
+osmdroidWms = "6.1.6"
+playServicesLocation = "21.3.0"
+playServicesMaps = "19.1.0"
+roomRuntime = "2.7.0"
 
 [libraries]
+androidx-activity-compose-v1101 = { module = "androidx.activity:activity-compose", version.ref = "activityComposeVersion" }
 androidx-constraintlayout-compose = { module = "androidx.constraintlayout:constraintlayout-compose", version.ref = "constraintlayoutCompose" }
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 androidx-navigation-compose = { module = "androidx.navigation:navigation-compose", version.ref = "navigationCompose" }
+androidx-room-compiler = { module = "androidx.room:room-compiler", version.ref = "roomRuntime" }
+androidx-room-ktx = { module = "androidx.room:room-ktx", version.ref = "roomRuntime" }
+androidx-room-runtime = { module = "androidx.room:room-runtime", version.ref = "roomRuntime" }
 compose = { module = "com.github.bumptech.glide:compose", version.ref = "compose" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
@@ -37,10 +51,18 @@ androidx-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-man
 androidx-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4" }
 androidx-material3 = { group = "androidx.compose.material3", name = "material3" }
 androidx-compose-material = { group = "androidx.wear.compose", name = "compose-material", version.ref = "composeMaterial" }
+koin-android = { module = "io.insert-koin:koin-android", version.ref = "koinAndroid" }
+koin-androidx-compose = { module = "io.insert-koin:koin-androidx-compose", version.ref = "koinAndroidxCompose" }
+koin-core = { module = "io.insert-koin:koin-core", version.ref = "koinCore" }
 org-osmdroid-osmdroid-wms = { module = "org.osmdroid:osmdroid-wms", version.ref = "osmdroidOsmdroidWms" }
+osmdroid-android-v616 = { module = "org.osmdroid:osmdroid-android", version.ref = "osmdroidAndroid" }
 osmdroid-geopackage = { module = "org.osmdroid:osmdroid-geopackage", version.ref = "osmdroidGeopackage" }
+osmdroid-geopackage-v616 = { module = "org.osmdroid:osmdroid-geopackage", version.ref = "osmdroidGeopackageVersion" }
 osmdroid-mapsforge = { module = "org.osmdroid:osmdroid-mapsforge", version.ref = "osmdroidMapsforge" }
+osmdroid-mapsforge-v616 = { module = "org.osmdroid:osmdroid-mapsforge", version.ref = "osmdroidMapsforgeVersion" }
 osmdroid-osmdroid-android = { module = "org.osmdroid:osmdroid-android", version.ref = "osmdroidAndroidVersion" }
+osmdroid-wms-v616 = { module = "org.osmdroid:osmdroid-wms", version.ref = "osmdroidWms" }
+play-services-location = { module = "com.google.android.gms:play-services-location", version.ref = "playServicesLocation" }
 play-services-maps = { group = "com.google.android.gms", name = "play-services-maps", version.ref = "playServicesMaps" }
 
 [plugins]
