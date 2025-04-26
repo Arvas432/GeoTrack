@@ -1,6 +1,8 @@
 package com.example.geotrack.data.location
 
+import android.graphics.Bitmap
 import com.example.geotrack.data.db.TrackDao
+import com.example.geotrack.data.local.LocalImageStorageHandler
 import com.example.geotrack.domain.routeTracking.TrackRepository
 import com.example.geotrack.domain.routeTracking.model.Track
 import com.example.geotrack.util.TrackMapper
@@ -12,29 +14,42 @@ import kotlinx.coroutines.withContext
 
 class TrackRepositoryImpl(
     private val trackDao: TrackDao,
+    private val storageHandler: LocalImageStorageHandler,
     private val dispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : TrackRepository {
     override suspend fun saveTrack(track: Track) {
-        trackDao.insert(TrackMapper.mapModelToEntity(track))
+        var imagePath: String? = null
+        if (track.image != null) {
+            imagePath = storageHandler.createImageFile(track.image)
+        }
+        trackDao.insert(TrackMapper.mapModelToEntity(track, imagePath))
     }
 
     override fun getAllTracks(): Flow<List<Track>> = flow {
         val tracks = trackDao.getAllTracks().map {
-            TrackMapper.mapEntityToModel(it)
+            var image: Bitmap? = null
+            if (it.imageFilePath != null) {
+                image = storageHandler.readBitmapFromFilePath(it.imageFilePath)
+            }
+            TrackMapper.mapEntityToModel(it, image)
         }
         emit(tracks)
+    }
+
+    override suspend fun deleteTrack(trackId: Long) {
+        trackDao.delete(trackId)
     }
 
     override suspend fun getTrackById(id: Long): Track? = withContext(dispatcher) {
         val result = trackDao.getTrackById(id)
         if (result != null) {
-            TrackMapper.mapEntityToModel(result)
+            var image: Bitmap? = null
+            if (result.imageFilePath != null) {
+                image = storageHandler.readBitmapFromFilePath(result.imageFilePath)
+            }
+            TrackMapper.mapEntityToModel(result, image)
         } else {
             null
         }
-    }
-
-    override suspend fun deleteTrack(track: Track) = withContext(dispatcher) {
-        trackDao.delete(TrackMapper.mapModelToEntity(track))
     }
 }

@@ -11,5 +11,7 @@ data class TrackEntity(
     val duration: Long,
     val distance: Double,
     val averageSpeed: Double,
-    val gpxData: String
+    val gpxData: String?,
+    val likes: Int?,
+    val imageFilePath: String?
 )

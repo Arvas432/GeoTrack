@@ -4,7 +4,7 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     kotlin("kapt")
 }
-
+tasks.register("testClasses")
 android {
     namespace = "com.example.geotrack"
     compileSdk = 35

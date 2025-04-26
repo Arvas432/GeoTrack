@@ -1,5 +1,6 @@
 package com.example.geotrack.domain.routeTracking.impl
 
+import android.graphics.Bitmap
 import android.util.Log
 import com.example.geotrack.domain.routeTracking.TrackInteractor
 import com.example.geotrack.domain.routeTracking.TrackRepository
@@ -16,9 +17,14 @@ class TrackInteractorImpl(
     private val geoConverter: GpxConverter
 ) :
     TrackInteractor {
+    private fun generateTrackName(timestamp: Long): String {
+        return "Track ${Instant.ofEpochMilli(timestamp)}"
+    }
+
     override suspend fun saveTrack(
         gpxPoints: List<GpxPoint>,
         geoPoints: List<GeoPoint>,
+        image: Bitmap?,
         startTime: Long,
         endTime: Long
     ) {
@@ -34,7 +40,9 @@ class TrackInteractorImpl(
             duration = duration.toDuration(unit = DurationUnit.MINUTES),
             distance = totalDistance,
             averageSpeed = averageSpeed,
-            gpxData = gpxData
+            gpxData = gpxData,
+            likes = 0,
+            image = image
         )
 
         trackRepository.saveTrack(track)
@@ -42,8 +50,5 @@ class TrackInteractorImpl(
             Log.i("МАРШРУТЫ", it.toString())
         }
 
-    }
-    private fun generateTrackName(timestamp: Long): String {
-        return "Track ${Instant.ofEpochMilli(timestamp)}"
     }
 }

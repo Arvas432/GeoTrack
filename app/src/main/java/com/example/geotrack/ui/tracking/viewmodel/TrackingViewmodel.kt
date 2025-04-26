@@ -1,23 +1,23 @@
 package com.example.geotrack.ui.tracking.viewmodel
 
 
+import android.graphics.Bitmap
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.geotrack.domain.routeTracking.GeoRepository
 import com.example.geotrack.domain.routeTracking.TrackInteractor
 import com.example.geotrack.domain.routeTracking.model.GpxPoint
 import com.example.geotrack.ui.tracking.state.TrackingIntent
+import com.example.geotrack.ui.tracking.state.TrackingIntent.StopTracking
 import com.example.geotrack.ui.tracking.state.TrackingState
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.osmdroid.util.GeoPoint
-import java.util.concurrent.TimeUnit
 
 
 class TrackingViewModel(
@@ -36,7 +36,7 @@ class TrackingViewModel(
     fun processIntent(intent: TrackingIntent) {
         when (intent) {
             TrackingIntent.StartTracking -> startTracking()
-            TrackingIntent.StopTracking -> stopTracking()
+            is StopTracking -> stopTracking(intent.mapBitmap)
             TrackingIntent.TogglePause -> togglePause()
             TrackingIntent.AbandonTracking -> abandonTracking()
             is TrackingIntent.UpdateLocation -> updateState(intent.point, intent.speed)
@@ -49,9 +49,6 @@ class TrackingViewModel(
         startLocationUpdates()
     }
 
-    private fun stopTracking() {
-        saveTrack()
-    }
 
     private fun abandonTracking() {
         _state.update {
@@ -71,7 +68,6 @@ class TrackingViewModel(
     private fun startLocationUpdates() {
         locationJob = viewModelScope.launch {
             repository.getLocationUpdates()
-                .catch { e -> /* Handle error */ }
                 .collect { location ->
                     processIntent(
                         TrackingIntent.UpdateLocation(
@@ -115,11 +111,11 @@ class TrackingViewModel(
         }
     }
 
-    private fun saveTrack() {
+    private fun stopTracking(bitmap: Bitmap?) {
         viewModelScope.launch {
             val points = _state.value.geoPoints
             if (points.isNotEmpty()) {
-                trackInteractor.saveTrack(gpxPoints = gpxPoints, geoPoints = points, startTime = startTime, endTime = endTime)
+                trackInteractor.saveTrack(gpxPoints = gpxPoints, geoPoints = points, startTime = startTime, endTime = endTime, image = bitmap)
             }
             timerJob?.cancel()
             gpxPoints.clear()
