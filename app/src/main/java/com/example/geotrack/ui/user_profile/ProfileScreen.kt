@@ -2,6 +2,8 @@ package com.example.geotrack.ui.user_profile
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -13,6 +15,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -39,6 +42,7 @@ import com.bumptech.glide.integration.compose.Placeholder
 import com.bumptech.glide.integration.compose.placeholder
 import com.example.geotrack.R
 import com.example.geotrack.domain.Route
+import com.example.geotrack.domain.routeTracking.model.Track
 import com.example.geotrack.ui.robotoFamily
 import com.example.geotrack.ui.theme.GrayB4
 import com.example.geotrack.ui.common_ui_components.ScreenHeader
@@ -50,26 +54,27 @@ import org.koin.androidx.compose.koinViewModel
 @Preview
 @Composable
 fun ProfileScreen(
-    viewModel: HistoryViewModel = koinViewModel()
+    viewModel: HistoryViewModel = koinViewModel(),
+    onTrackSelected: (Long) -> Unit = { }
 ) {
     val state by viewModel.state.collectAsState()
     var profileImageUrl: String by remember { mutableStateOf("") }
     var name: String by remember { mutableStateOf("") }
     var routesCompleted: Int by remember { mutableIntStateOf(0) }
-    var routes: MutableList<Route> = remember {
-        mutableStateListOf<Route>(
-            Route(
-                1,
-                "От туда в туда",
-                "10 декабря 2024",
-                10.0F,
-                100.0F,
-                "2:15:40",
-                99,
-                null
-            )
-        )
-    }
+//    var routes: MutableList<Route> = remember {
+//        mutableStateListOf<Route>(
+//            Route(
+//                1,
+//                "От туда в туда",
+//                "10 декабря 2024",
+//                10.0F,
+//                100.0F,
+//                "2:15:40",
+//                99,
+//                null
+//            )
+//        )
+//    }
     Scaffold(
         topBar = { ScreenHeader(stringResource(R.string.Profile), Modifier.padding(start = 16.dp)) }
     ) { paddingValues ->
@@ -138,32 +143,60 @@ fun ProfileScreen(
                     start.linkTo(parent.start, margin = 14.dp)
                 }
             )
-            LazyColumn(
+            when {
+                state.isLoading -> {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator(color = MaterialTheme.colorScheme.secondary)
+                    }
+                }
+            }
+            TrackList(tracks = state.tracks, onTrackClick = onTrackSelected, onDeleteTrack = {viewModel.deleteTrack(it)},
                 modifier = Modifier
                     .constrainAs(routesList) {
                         top.linkTo(routesListHeader.bottom, margin = 4.dp)
                     }
-                    .fillMaxSize()
-            ) {
-                items(routes, key = { route ->
-                    route.id
-                }) { route ->
-                    RouteListItem(route)
-                }
-            }
+                    .fillMaxSize())
+        }
+    }
+}
+
+
+@Composable
+private fun TrackList(
+    tracks: List<Track>,
+    onTrackClick: (Long) -> Unit,
+    onDeleteTrack: (Long) -> Unit,
+    modifier: Modifier,
+) {
+    LazyColumn(modifier = modifier) {
+        items(
+            items = tracks,
+            key = { track -> track.id!! }
+        ) { track ->
+            RouteListItem(track, onTrackClick, onDeleteTrack)
         }
     }
 }
 
 @OptIn(ExperimentalGlideComposeApi::class)
 @Composable
-fun RouteListItem(route: Route) {
-    ConstraintLayout(modifier = Modifier.height(150.dp)) {
+fun RouteListItem(
+    route: Track,
+    onTrackClick: (Long) -> Unit,
+    onDeleteTrack: (Long) -> Unit,
+) {
+    ConstraintLayout(modifier = Modifier
+        .height(150.dp)
+        .clickable {
+            if (route.id != null) {
+                onTrackClick(route.id)
+            }
+        }) {
         val (routeTitle,
             routeDate,
             routeParameters,
             routeImage) = createRefs()
-        Text(text = route.title,
+        Text(text = route.name,
             fontFamily = robotoFamily,
             fontSize = 16.sp,
             lineHeight = 20.sp,
@@ -175,7 +208,7 @@ fun RouteListItem(route: Route) {
             }
         )
         Text(
-            text = route.date,
+            text = route.date.toString(),
             fontFamily = robotoFamily,
             fontSize = 10.sp,
             lineHeight = 22.sp,
@@ -187,7 +220,7 @@ fun RouteListItem(route: Route) {
             }
         )
         GlideImage(
-            model = route.imageUri,
+            model = route.image,
             contentDescription = "Route image",
             failure = placeholder(R.drawable.map_placeholder),
             modifier = Modifier
@@ -207,7 +240,7 @@ fun RouteListItem(route: Route) {
                     bottom.linkTo(parent.bottom)
                 }) {
             ValueWithHeader(stringResource(R.string.avg_speed), buildString {
-                append(route.avgSpeed.toString())
+                append(Math.round(route.averageSpeed * 10.0) / 10.0)
                 append(
                     stringResource(
                         R.string.kmh
@@ -215,14 +248,21 @@ fun RouteListItem(route: Route) {
                 )
             }, Modifier.weight(1F))
             ValueWithHeader(stringResource(R.string.distance), buildString {
-                append(route.distance.toString())
+                append(Math.round(route.distance * 10.0) / 10.0)
                 append(
                     stringResource(
                         R.string.km
                     )
                 )
             }, Modifier.weight(1F))
-            ValueWithHeader(stringResource(R.string.time), route.time, Modifier.weight(1F))
+            ValueWithHeader(
+                stringResource(R.string.time),
+                buildString {
+                    append(route.duration.inWholeMinutes.toString())
+                    append(stringResource(R.string.mins))
+                },
+                Modifier.weight(1F)
+            )
             ValueWithHeader(
                 stringResource(R.string.likes),
                 route.likes.toString(),

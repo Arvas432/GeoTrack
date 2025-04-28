@@ -30,7 +30,7 @@ object TrackMapper {
             id = entity.id,
             name = entity.name,
             date = Instant.ofEpochMilli(entity.date),
-            duration = entity.duration.toDuration(DurationUnit.MINUTES),
+            duration = entity.duration.toDuration(DurationUnit.MILLISECONDS),
             distance = entity.distance,
             averageSpeed = entity.averageSpeed,
             gpxData = entity.gpxData,

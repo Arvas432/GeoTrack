@@ -2,6 +2,7 @@ package com.example.geotrack.ui.tracking.viewmodel
 
 
 import android.graphics.Bitmap
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.geotrack.domain.routeTracking.GeoRepository
@@ -18,6 +19,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.osmdroid.util.GeoPoint
+import kotlin.math.max
 
 
 class TrackingViewModel(
@@ -113,8 +115,11 @@ class TrackingViewModel(
 
     private fun stopTracking(bitmap: Bitmap?) {
         viewModelScope.launch {
+            endTime = System.currentTimeMillis()
             val points = _state.value.geoPoints
             if (points.isNotEmpty()) {
+                Log.i("НАЧАЛО", startTime.toString())
+                Log.i("КОНЕЦ", endTime.toString())
                 trackInteractor.saveTrack(gpxPoints = gpxPoints, geoPoints = points, startTime = startTime, endTime = endTime, image = bitmap)
             }
             timerJob?.cancel()
@@ -149,9 +154,19 @@ class TrackingViewModel(
     }
 
     private fun calculateElapsedTime(): String {
-        val currentTime = if (_state.value.isPaused) pauseOffset else System.currentTimeMillis() - startTime
-        val minutes = (currentTime / 1000) / 60
-        val seconds = (currentTime / 1000) % 60
+        val currentTime = when {
+            _state.value.isPaused -> pauseOffset
+            _state.value.isTracking -> System.currentTimeMillis() - startTime
+            else -> 0L // Если трекинг не активен
+        }
+
+        // Добавляем проверку на отрицательное время
+        val safeTime = max(currentTime, 0L)
+
+        val totalSeconds = safeTime / 1000
+        val minutes = totalSeconds / 60
+        val seconds = totalSeconds % 60
+
         return "%d:%02d".format(minutes, seconds)
     }
 

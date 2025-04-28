@@ -31,13 +31,14 @@ class TrackInteractorImpl(
         require(gpxPoints.isNotEmpty() && geoPoints.isNotEmpty()) { "Cannot save empty track" }
         val totalDistance = geoConverter.calculateTotalDistance(geoPoints)
         val duration = endTime - startTime
+        Log.i("DURATION", duration.toString())
         val averageSpeed = geoConverter.calculateAverageSpeed(totalDistance, duration)
         val gpxData = geoConverter.convertToGpx(gpxPoints, "Track")
 
         val track = Track(
             name = generateTrackName(startTime),
             date = Instant.ofEpochMilli(startTime),
-            duration = duration.toDuration(unit = DurationUnit.MINUTES),
+            duration = duration.toDuration(unit = DurationUnit.MILLISECONDS),
             distance = totalDistance,
             averageSpeed = averageSpeed,
             gpxData = gpxData,
