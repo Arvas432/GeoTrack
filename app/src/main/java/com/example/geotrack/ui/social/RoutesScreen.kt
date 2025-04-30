@@ -1,6 +1,7 @@
 package com.example.geotrack.ui.social
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -73,7 +74,7 @@ fun RoutesScreen() {
         }
     ) { paddingValues ->
         Column(
-            modifier = Modifier.padding(paddingValues)
+            modifier = Modifier.padding(paddingValues).background(MaterialTheme.colorScheme.primary)
         ) {
             HintedLabellessTextField(
                 "",

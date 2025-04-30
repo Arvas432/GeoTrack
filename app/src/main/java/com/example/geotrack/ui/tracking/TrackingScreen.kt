@@ -59,7 +59,13 @@ import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.runtime.collectAsState
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.drawable.toBitmap
+import androidx.lifecycle.lifecycleScope
 import com.example.geotrack.ui.tracking.state.TrackingIntent
+import com.example.geotrack.util.MapUtils
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.koin.androidx.compose.koinViewModel
 import org.osmdroid.util.BoundingBox
 import org.osmdroid.util.GeoPoint
@@ -105,7 +111,11 @@ fun TrackingScreen(viewModel: TrackingViewModel = koinViewModel()) {
             )
         }
     ) { paddingValues ->
-        ConstraintLayout(modifier = Modifier.padding(paddingValues)) {
+        ConstraintLayout(
+            modifier = Modifier
+                .padding(paddingValues)
+                .background(MaterialTheme.colorScheme.primary)
+        ) {
             val (map, stopButton, pauseButton, abandonButton) = createRefs()
             var mapView by remember { mutableStateOf<MapView?>(null) }
             AndroidView(
@@ -121,9 +131,9 @@ fun TrackingScreen(viewModel: TrackingViewModel = koinViewModel()) {
                             XYTileSource(
                                 "HttpMapnik",
                                 0, 19, 256, ".png", arrayOf(
-                                    "http://a.tile.openstreetmap.org/",
-                                    "http://b.tile.openstreetmap.org/",
-                                    "http://c.tile.openstreetmap.org/"
+                                    "https://a.tile.openstreetmap.org/",
+                                    "https://b.tile.openstreetmap.org/",
+                                    "https://c.tile.openstreetmap.org/"
                                 ),
                                 "© OpenStreetMap contributors"
                             )
@@ -196,23 +206,21 @@ fun TrackingScreen(viewModel: TrackingViewModel = koinViewModel()) {
                         end.linkTo(pauseButton.start)
                     }
                     .clickable {
-                        val polyline = Polyline().apply {
-                            setPoints(ArrayList(state.geoPoints))
-                            outlinePaint.color = lineColor
-                            outlinePaint.strokeWidth = 12f
-                        }
-                        viewModel.processIntent(
-                            TrackingIntent.StopTracking(
-                                mapView?.let {
-                                    createMapSnapshot(
-                                        it,
-                                        polyline,
-                                        lineColor
+                        mapView?.let {
+                            lifecycleOwner.lifecycleScope.launch {
+                                val snapshot = createMapSnapshot(it, state.geoPoints, lineColor)
+                                viewModel.processIntent(
+                                    TrackingIntent.StopTracking(
+                                        snapshot ?: AppCompatResources
+                                            .getDrawable(
+                                                context,
+                                                R.drawable.placeholder
+                                            )
+                                            ?.toBitmap(640, 480)
                                     )
-                                } ?: AppCompatResources.getDrawable(context, R.drawable.map_placeholder)
-                                    ?.toBitmap(640, 480)
-                            )
-                        )
+                                )
+                            }
+                        }
                     }) {
                 Icon(
                     imageVector = Stop,
@@ -295,76 +303,44 @@ fun RouteParameters(speed: String, distance: String, time: String, modifier: Mod
     }
 }
 
-fun createMapSnapshot(mapView: MapView, polyline: Polyline, lineColor: Int): Bitmap? {
-    // 1. Получаем все точки полилинии
-    val geoPoints = polyline.actualPoints
+suspend fun createMapSnapshot(
+    mapView: MapView,
+    geoPoints: List<GeoPoint>,
+    lineColor: Int
+): Bitmap? = withContext(Dispatchers.Main) {
+    if (geoPoints.isEmpty() || mapView.width == 0 || mapView.height == 0) return@withContext null
 
-    // 2. Рассчитываем область отображения
-    val boundingBox = BoundingBox.fromGeoPoints(geoPoints)
+    val boundingBox = MapUtils.createSquareBoundingBox(geoPoints)
+    val bufferPixels = 100
     mapView.zoomToBoundingBox(boundingBox, true)
-
-    // 3. Ждем завершения анимации
-    var bitmap: Bitmap? = null
-    mapView.postDelayed({
-        // 4. Создаем Bitmap
-        bitmap = Bitmap.createBitmap(
-            mapView.width,
-            mapView.height,
-            Bitmap.Config.ARGB_8888
-        )
-        val canvas = Canvas(bitmap!!)
-
-        // 5. Рисуем карту
+    delay(500)
+    val bitmap = Bitmap.createBitmap(
+        max(mapView.width, mapView.height) + bufferPixels,
+        min(mapView.width, mapView.height)+ bufferPixels,
+        Bitmap.Config.ARGB_8888
+    ).also {
+        val canvas = Canvas(it)
         mapView.draw(canvas)
-
-        // 6. Рисуем полилинию
         val projection = mapView.projection
-        val path = Path()
-
-        // 7. Конвертируем GeoPoints в экранные координаты
-        for (i in geoPoints.indices) {
-            val point = Point()
-            projection.toPixels(geoPoints[i], point)
-            if (i == 0) {
-                path.moveTo(point.x.toFloat(), point.y.toFloat())
-            } else {
-                path.lineTo(point.x.toFloat(), point.y.toFloat())
+        val path = Path().apply {
+            geoPoints.forEachIndexed { i, point ->
+                val pixelPoint = Point().apply {
+                    projection.toPixels(point, this)
+                }
+                if (i == 0) moveTo(pixelPoint.x.toFloat(), pixelPoint.y.toFloat())
+                else lineTo(pixelPoint.x.toFloat(), pixelPoint.y.toFloat())
             }
         }
 
-        // 8. Настраиваем стиль линии
-        val paint = Paint().apply {
+        Paint().apply {
             color = lineColor
             strokeWidth = 12f
             style = Paint.Style.STROKE
             isAntiAlias = true
+        }.let { paint ->
+            canvas.drawPath(path, paint)
         }
-
-        // 9. Рисуем путь на Bitmap
-        canvas.drawPath(path, paint)
-    }, 500) // Задержка для завершения анимации
-
-    return bitmap
-}
-
-// Расширение для вычисления BoundingBox
-fun BoundingBox.fromGeoPoints(points: List<GeoPoint>): BoundingBox {
-    var minLat = Double.MAX_VALUE
-    var maxLat = -Double.MAX_VALUE
-    var minLon = Double.MAX_VALUE
-    var maxLon = -Double.MAX_VALUE
-
-    for (point in points) {
-        minLat = min(minLat, point.latitude)
-        maxLat = max(maxLat, point.latitude)
-        minLon = min(minLon, point.longitude)
-        maxLon = max(maxLon, point.longitude)
     }
 
-    return BoundingBox(
-        maxLat,
-        maxLon,
-        minLat,
-        minLon
-    )
+    bitmap
 }

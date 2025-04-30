@@ -30,6 +30,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.painter.BitmapPainter
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -76,9 +79,14 @@ fun ProfileScreen(
 //        )
 //    }
     Scaffold(
-        topBar = { ScreenHeader(stringResource(R.string.Profile), Modifier.padding(start = 16.dp)) }
+        topBar = { ScreenHeader(stringResource(R.string.Profile),
+            Modifier
+                .padding(start = 16.dp)
+                .background(MaterialTheme.colorScheme.primary)) }
     ) { paddingValues ->
-        ConstraintLayout(modifier = Modifier.padding(paddingValues)) {
+        ConstraintLayout(modifier = Modifier
+            .padding(paddingValues)
+            .background(MaterialTheme.colorScheme.primary)) {
             val (profileImage, userName, routesCompletedHeader, routesCompletedValue, spacer, routesListHeader, routesList) = createRefs()
 
             GlideImage(
@@ -219,19 +227,33 @@ fun RouteListItem(
                 start.linkTo(parent.start, margin = 8.dp)
             }
         )
-        GlideImage(
-            model = route.image,
-            contentDescription = "Route image",
-            failure = placeholder(R.drawable.map_placeholder),
-            modifier = Modifier
-                .constrainAs(routeImage) {
-                    top.linkTo(parent.top, margin = 14.dp)
-                    end.linkTo(parent.end, margin = 16.dp)
-                }
-                .height(64.dp)
-                .width(64.dp)
-                .clip(RoundedCornerShape(12.dp))
-        )
+        if ((route.image) != null) {
+            Image(
+                painter = BitmapPainter(route.image.asImageBitmap()) ,
+                contentDescription = "Route image",
+                modifier = Modifier
+                    .constrainAs(routeImage) {
+                        top.linkTo(parent.top, margin = 14.dp)
+                        end.linkTo(parent.end, margin = 16.dp)
+                    }
+                    .height(64.dp)
+                    .width(64.dp)
+                    .clip(RoundedCornerShape(12.dp))
+            )
+        } else {
+            Image(
+                painter = painterResource(R.drawable.placeholder) ,
+                contentDescription = "Route image",
+                modifier = Modifier
+                    .constrainAs(routeImage) {
+                        top.linkTo(parent.top, margin = 14.dp)
+                        end.linkTo(parent.end, margin = 16.dp)
+                    }
+                    .height(64.dp)
+                    .width(64.dp)
+                    .clip(RoundedCornerShape(12.dp))
+            )
+        }
         Row(verticalAlignment = Alignment.Bottom,
             modifier = Modifier
                 .fillMaxWidth()

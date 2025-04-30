@@ -1,6 +1,7 @@
 package com.example.geotrack.data.location
 
 import android.graphics.Bitmap
+import android.util.Log
 import com.example.geotrack.data.db.TrackDao
 import com.example.geotrack.data.local.LocalImageStorageHandler
 import com.example.geotrack.domain.routeTracking.TrackRepository
@@ -21,6 +22,7 @@ class TrackRepositoryImpl(
         var imagePath: String? = null
         if (track.image != null) {
             imagePath = storageHandler.createImageFile(track.image)
+            Log.i("КАРТИНКА ПРИ СОХРАНЕНИИ", imagePath.toString())
         }
         trackDao.insert(TrackMapper.mapModelToEntity(track, imagePath))
     }

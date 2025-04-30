@@ -6,6 +6,7 @@ import android.preference.PreferenceManager.getDefaultSharedPreferences
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
@@ -19,6 +20,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.wear.compose.material.MaterialTheme
 import com.example.geotrack.ui.authorization.LoginScreen
 import com.example.geotrack.ui.model.Screens
 import com.example.geotrack.ui.theme.GeoTrackTheme
@@ -83,7 +85,7 @@ fun MyApp() {
     Scaffold(
         bottomBar = { BottomNavigationBar(navController) }
     ) { innerPadding ->
-        NavHostContainer(navController, Modifier.padding(innerPadding))
+        NavHostContainer(navController, Modifier.padding(innerPadding).background(MaterialTheme.colors.primary))
     }
 }
 

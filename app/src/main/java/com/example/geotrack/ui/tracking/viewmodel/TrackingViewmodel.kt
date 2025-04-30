@@ -115,6 +115,7 @@ class TrackingViewModel(
 
     private fun stopTracking(bitmap: Bitmap?) {
         viewModelScope.launch {
+            Log.i("BITMAP", bitmap.toString())
             endTime = System.currentTimeMillis()
             val points = _state.value.geoPoints
             if (points.isNotEmpty()) {
@@ -157,10 +158,9 @@ class TrackingViewModel(
         val currentTime = when {
             _state.value.isPaused -> pauseOffset
             _state.value.isTracking -> System.currentTimeMillis() - startTime
-            else -> 0L // Если трекинг не активен
+            else -> 0L
         }
 
-        // Добавляем проверку на отрицательное время
         val safeTime = max(currentTime, 0L)
 
         val totalSeconds = safeTime / 1000
