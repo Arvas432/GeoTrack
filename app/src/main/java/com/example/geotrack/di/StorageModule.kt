@@ -4,6 +4,7 @@ import android.content.ContentResolver
 import androidx.room.Room
 import com.example.geotrack.data.db.AppDatabase
 import com.example.geotrack.data.db.TrackDao
+import com.example.geotrack.data.db.UserProfileDao
 import com.example.geotrack.data.local.LocalImageStorageHandler
 import com.example.geotrack.data.local.LocalImageStorageHandlerImpl
 import com.example.geotrack.data.location.TrackRepositoryImpl
@@ -23,6 +24,7 @@ val storageModule = module {
         AppDatabase::class.java, "tracks-db"
     ).build() }
     single<TrackDao> { get<AppDatabase>().trackDao() }
+    single<UserProfileDao> {get<AppDatabase>().userProfileDao()}
     single<TrackRepository> { TrackRepositoryImpl(get(), get()) }
     single<ContentResolver> { androidContext().contentResolver }
     single<GpxConverter> { GpxConverter() }

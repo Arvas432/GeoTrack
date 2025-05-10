@@ -28,6 +28,7 @@ import com.example.geotrack.ui.common_ui_components.BottomNavigationBar
 import com.example.geotrack.ui.common_ui_components.MapPin
 import com.example.geotrack.ui.common_ui_components.Settings
 import com.example.geotrack.ui.common_ui_components.SocialIcon
+import com.example.geotrack.ui.profile_creation.ProfileCreation
 import com.example.geotrack.ui.social.RoutesScreen
 import com.example.geotrack.ui.tracking.TrackingScreen
 import com.example.geotrack.ui.user_profile.ProfileScreen
@@ -83,6 +84,7 @@ class MainActivity : ComponentActivity() {
 fun MyApp() {
     val navController = rememberNavController()
     Scaffold(
+        modifier = Modifier.background(MaterialTheme.colors.primary),
         bottomBar = { BottomNavigationBar(navController) }
     ) { innerPadding ->
         NavHostContainer(navController, Modifier.padding(innerPadding).background(MaterialTheme.colors.primary))
@@ -91,12 +93,13 @@ fun MyApp() {
 
 @Composable
 fun NavHostContainer(navController: NavHostController, modifier: Modifier) {
-    NavHost(navController, startDestination = "auth_route", modifier = modifier) {
+    NavHost(navController, startDestination = "profile_creation_route", modifier = modifier) {
         composable("auth_route") { LoginScreen() }
         composable("settings_route") { SettingsScreen() }
         composable("tracking_route") { TrackingScreen() }
         composable("feed_route") { RoutesScreen() }
         composable("profile_route") { ProfileScreen() }
+        composable("profile_creation_route") { ProfileCreation(navController = navController) }
     }
 }
 

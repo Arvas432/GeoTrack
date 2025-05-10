@@ -59,6 +59,7 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.7.0")
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.7.0")
     implementation("androidx.compose.runtime:runtime:1.6.0")
+    implementation("androidx.exifinterface:exifinterface:1.3.6")
 
     implementation(libs.androidx.material3)
     implementation(libs.androidx.compose.material)

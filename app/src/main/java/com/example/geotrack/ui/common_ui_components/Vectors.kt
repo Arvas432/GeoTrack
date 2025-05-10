@@ -4,6 +4,8 @@ package com.example.geotrack.ui.common_ui_components
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.vector.PathData
+import androidx.compose.ui.graphics.vector.group
 import androidx.compose.ui.graphics.vector.path
 import androidx.compose.ui.unit.dp
 
@@ -466,3 +468,75 @@ val Abandon: ImageVector
 
 @Suppress("ObjectPropertyName")
 private var _Abandon: ImageVector? = null
+
+
+val Add_photo: ImageVector
+    get() {
+        if (_Add_photo != null) {
+            return _Add_photo!!
+        }
+        _Add_photo = ImageVector.Builder(
+            name = "Add photo",
+            defaultWidth = 100.dp,
+            defaultHeight = 100.dp,
+            viewportWidth = 100f,
+            viewportHeight = 100f
+        ).apply {
+            group(
+                clipPathData = PathData {
+                    moveTo(8f, 0f)
+                    lineTo(92f, 0f)
+                    arcTo(8f, 8f, 0f, isMoreThanHalf = false, isPositiveArc = true, 100f, 8f)
+                    lineTo(100f, 92f)
+                    arcTo(8f, 8f, 0f, isMoreThanHalf = false, isPositiveArc = true, 92f, 100f)
+                    lineTo(8f, 100f)
+                    arcTo(8f, 8f, 0f, isMoreThanHalf = false, isPositiveArc = true, 0f, 92f)
+                    lineTo(0f, 8f)
+                    arcTo(8f, 8f, 0f, isMoreThanHalf = false, isPositiveArc = true, 8f, 0f)
+                    close()
+                }
+            ) {
+                path(fill = SolidColor(Color(0xFFAEAFB4))) {
+                    moveTo(79.17f, 29.17f)
+                    verticalLineTo(41.63f)
+                    curveTo(79.17f, 41.63f, 70.88f, 41.67f, 70.83f, 41.63f)
+                    verticalLineTo(29.17f)
+                    horizontalLineTo(58.33f)
+                    curveTo(58.33f, 29.17f, 58.38f, 20.88f, 58.33f, 20.83f)
+                    horizontalLineTo(70.83f)
+                    verticalLineTo(8.33f)
+                    horizontalLineTo(79.17f)
+                    verticalLineTo(20.83f)
+                    horizontalLineTo(91.67f)
+                    verticalLineTo(29.17f)
+                    horizontalLineTo(79.17f)
+                    close()
+                    moveTo(66.67f, 45.83f)
+                    verticalLineTo(33.33f)
+                    horizontalLineTo(54.17f)
+                    verticalLineTo(20.83f)
+                    horizontalLineTo(20.83f)
+                    curveTo(16.25f, 20.83f, 12.5f, 24.58f, 12.5f, 29.17f)
+                    verticalLineTo(79.17f)
+                    curveTo(12.5f, 83.75f, 16.25f, 87.5f, 20.83f, 87.5f)
+                    horizontalLineTo(70.83f)
+                    curveTo(75.42f, 87.5f, 79.17f, 83.75f, 79.17f, 79.17f)
+                    verticalLineTo(45.83f)
+                    horizontalLineTo(66.67f)
+                    close()
+                    moveTo(20.83f, 79.17f)
+                    lineTo(33.33f, 62.5f)
+                    lineTo(41.67f, 75f)
+                    lineTo(54.17f, 58.33f)
+                    lineTo(70.83f, 79.17f)
+                    horizontalLineTo(20.83f)
+                    close()
+                }
+            }
+        }.build()
+
+        return _Add_photo!!
+    }
+
+@Suppress("ObjectPropertyName")
+private var _Add_photo: ImageVector? = null
