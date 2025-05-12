@@ -1,5 +1,6 @@
 package com.example.geotrack.ui.profile_creation.viewmodel
 
+import android.graphics.Bitmap
 import android.net.Uri
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
@@ -15,8 +16,8 @@ class ProfileViewModel(
     private val _uiState = mutableStateOf(ProfileCreationState())
     val uiState: State<ProfileCreationState> = _uiState
 
-    fun setProfileImage(uri: Uri?) {
-        _uiState.value = _uiState.value.copy(profileImageUri = uri)
+    fun setProfileImage(bitmap: Bitmap?) {
+        _uiState.value = _uiState.value.copy(profileImageBitmap = bitmap)
     }
 
     fun setName(value: String) {
@@ -56,7 +57,7 @@ class ProfileViewModel(
                     height = profile.height.toString(),
                     weight = profile.weight.toString(),
                     completedRoutes = profile.completedRoutes,
-                    profileImageUri = profile.profileImageUri?.let { Uri.parse(it) }
+                    profileImageBitmap = profile.profileImageBitmap
                 )
             }
         }

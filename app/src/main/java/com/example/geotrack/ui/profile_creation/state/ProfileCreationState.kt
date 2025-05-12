@@ -1,6 +1,6 @@
 package com.example.geotrack.ui.profile_creation.state
 
-import android.net.Uri
+import android.graphics.Bitmap
 import com.example.geotrack.domain.profile.model.UserProfile
 
 data class ProfileCreationState(
@@ -9,7 +9,7 @@ data class ProfileCreationState(
     val height: String = "",
     val weight: String = "",
     val completedRoutes: Int = 0,
-    val profileImageUri: Uri? = null
+    val profileImageBitmap: Bitmap? = null
 ) {
     fun toDomainModel() = UserProfile(
         id = id,
@@ -17,6 +17,6 @@ data class ProfileCreationState(
         height = height.toIntOrNull() ?: 0,
         weight = weight.toIntOrNull() ?: 0,
         completedRoutes = completedRoutes,
-        profileImageUri = profileImageUri?.toString()
+        profileImageBitmap = profileImageBitmap
     )
 }

@@ -15,8 +15,7 @@ class LocalImageStorageHandlerImpl(
     private val contentResolver: ContentResolver,
     private val context: Context
 ) : LocalImageStorageHandler {
-    override suspend fun createImageFile(bitmap: Bitmap): String {
-        val fileName = "${System.currentTimeMillis()}.jpg"
+    override suspend fun createImageFile(bitmap: Bitmap, fileName: String): String {
         val filePath = File(context.getExternalFilesDir(Environment.DIRECTORY_PICTURES), appPrivateStorageDirectory)
         if (!filePath.exists()) {
             filePath.mkdirs()

@@ -56,6 +56,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.runtime.collectAsState
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.drawable.toBitmap
@@ -78,6 +79,7 @@ fun TrackingScreen(viewModel: TrackingViewModel = koinViewModel()) {
     val context = LocalContext.current
     val state by viewModel.state.collectAsState()
     val lifecycleOwner = LocalLifecycleOwner.current
+    var showBottomSheet by remember { mutableStateOf(false) }
     val lineColor = MaterialTheme.colorScheme.secondary.toArgb()
     var hasLocationPermission by remember { mutableStateOf(false) }
     val permissionLauncher = rememberLauncherForActivityResult(
@@ -109,7 +111,7 @@ fun TrackingScreen(viewModel: TrackingViewModel = koinViewModel()) {
                     .fillMaxWidth()
                     .background(MaterialTheme.colorScheme.primary)
             )
-        }
+        },
     ) { paddingValues ->
         ConstraintLayout(
             modifier = Modifier
@@ -302,6 +304,8 @@ fun RouteParameters(speed: String, distance: String, time: String, modifier: Mod
         )
     }
 }
+
+
 
 suspend fun createMapSnapshot(
     mapView: MapView,

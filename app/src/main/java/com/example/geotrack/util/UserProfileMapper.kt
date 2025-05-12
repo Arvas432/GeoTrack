@@ -1,26 +1,27 @@
 package com.example.geotrack.util
 
+import android.graphics.Bitmap
 import com.example.geotrack.data.db.UserProfileEntity
 import com.example.geotrack.domain.profile.model.UserProfile
 
 object UserProfileMapper {
-    fun toEntity(domain: UserProfile) = UserProfileEntity(
+    fun toEntity(domain: UserProfile, imageFilePath: String?) = UserProfileEntity(
         id = domain.id,
         name = domain.name,
         height = domain.height,
         weight = domain.weight,
         completedRoutes = domain.completedRoutes,
-        profileImageUri = domain.profileImageUri
+        profileImageFilepath = imageFilePath
     )
 
-    fun fromEntity(entity: UserProfileEntity?) = entity?.let {
+    fun fromEntity(entity: UserProfileEntity?, imageBitmap: Bitmap?) = entity?.let {
         UserProfile(
             id = it.id,
             name = it.name,
             height = it.height,
             weight = it.weight,
             completedRoutes = it.completedRoutes,
-            profileImageUri = it.profileImageUri
+            profileImageBitmap = imageBitmap
         )
     }
 }

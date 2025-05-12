@@ -21,7 +21,8 @@ class TrackRepositoryImpl(
     override suspend fun saveTrack(track: Track) {
         var imagePath: String? = null
         if (track.image != null) {
-            imagePath = storageHandler.createImageFile(track.image)
+            imagePath =
+                storageHandler.createImageFile(track.image, track.name + System.currentTimeMillis())
             Log.i("КАРТИНКА ПРИ СОХРАНЕНИИ", imagePath.toString())
         }
         trackDao.insert(TrackMapper.mapModelToEntity(track, imagePath))

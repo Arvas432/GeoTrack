@@ -10,12 +10,16 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -23,7 +27,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -32,6 +35,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.painter.BitmapPainter
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -39,70 +43,69 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.constraintlayout.compose.ConstraintLayout
+import coil.compose.AsyncImage
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
-import com.bumptech.glide.integration.compose.Placeholder
 import com.bumptech.glide.integration.compose.placeholder
 import com.example.geotrack.R
-import com.example.geotrack.domain.Route
 import com.example.geotrack.domain.routeTracking.model.Track
 import com.example.geotrack.ui.robotoFamily
 import com.example.geotrack.ui.theme.GrayB4
 import com.example.geotrack.ui.common_ui_components.ScreenHeader
 import com.example.geotrack.ui.common_ui_components.ValueWithHeader
-import com.example.geotrack.ui.user_profile.viewModel.HistoryViewModel
+import com.example.geotrack.ui.user_profile.viewModel.UserProfileViewModel
 import org.koin.androidx.compose.koinViewModel
 
 @OptIn(ExperimentalGlideComposeApi::class)
 @Preview
 @Composable
 fun ProfileScreen(
-    viewModel: HistoryViewModel = koinViewModel(),
+    viewModel: UserProfileViewModel = koinViewModel(),
     onTrackSelected: (Long) -> Unit = { }
 ) {
     val state by viewModel.state.collectAsState()
-    var profileImageUrl: String by remember { mutableStateOf("") }
-    var name: String by remember { mutableStateOf("") }
-    var routesCompleted: Int by remember { mutableIntStateOf(0) }
-//    var routes: MutableList<Route> = remember {
-//        mutableStateListOf<Route>(
-//            Route(
-//                1,
-//                "От туда в туда",
-//                "10 декабря 2024",
-//                10.0F,
-//                100.0F,
-//                "2:15:40",
-//                99,
-//                null
-//            )
-//        )
-//    }
     Scaffold(
-        topBar = { ScreenHeader(stringResource(R.string.Profile),
-            Modifier
-                .padding(start = 16.dp)
-                .background(MaterialTheme.colorScheme.primary)) }
+        topBar = {
+            ScreenHeader(
+                stringResource(R.string.Profile),
+                Modifier
+                    .padding(start = 16.dp)
+                    .background(MaterialTheme.colorScheme.primary)
+            )
+        }
     ) { paddingValues ->
-        ConstraintLayout(modifier = Modifier
-            .padding(paddingValues)
-            .background(MaterialTheme.colorScheme.primary)) {
+        ConstraintLayout(
+            modifier = Modifier
+                .padding(paddingValues)
+                .background(MaterialTheme.colorScheme.primary)
+        ) {
             val (profileImage, userName, routesCompletedHeader, routesCompletedValue, spacer, routesListHeader, routesList) = createRefs()
 
-            GlideImage(
-                model = profileImageUrl,
-                contentDescription = "Profile image",
-                failure = placeholder(R.drawable.avatar_placeholder),
+            Box(
                 modifier = Modifier
                     .constrainAs(profileImage) {
                         top.linkTo(parent.top)
+                        start.linkTo(parent.start)
                     }
-                    .height(120.dp)
-                    .width(120.dp)
+                    .size(120.dp)
                     .clip(CircleShape)
-            )
+            ) {
+                state.profileImageBitmap?.let { bitmap ->
+                    Image(
+                        bitmap = bitmap.asImageBitmap(),
+                        contentDescription = "Profile image",
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
+                } ?: Icon(
+                    imageVector = Icons.Default.AccountCircle,
+                    tint = MaterialTheme.colorScheme.secondary,
+                    contentDescription = "Default profile",
+                    modifier = Modifier.fillMaxSize()
+                )
+            }
             Text(
-                text = name,
+                text = state.name,
                 fontFamily = robotoFamily,
                 fontSize = 26.sp,
                 color = MaterialTheme.colorScheme.onPrimary,
@@ -122,7 +125,7 @@ fun ProfileScreen(
                 }
             )
             Text(
-                text = routesCompleted.toString(),
+                text = state.completedRoutes.toString(),
                 fontFamily = robotoFamily,
                 fontSize = 12.sp,
                 color = MaterialTheme.colorScheme.secondary,
@@ -158,7 +161,9 @@ fun ProfileScreen(
                     }
                 }
             }
-            TrackList(tracks = state.tracks, onTrackClick = onTrackSelected, onDeleteTrack = {viewModel.deleteTrack(it)},
+            TrackList(tracks = state.tracks,
+                onTrackClick = onTrackSelected,
+                onDeleteTrack = { viewModel.deleteTrack(it) },
                 modifier = Modifier
                     .constrainAs(routesList) {
                         top.linkTo(routesListHeader.bottom, margin = 4.dp)
@@ -186,7 +191,7 @@ private fun TrackList(
     }
 }
 
-@OptIn(ExperimentalGlideComposeApi::class)
+
 @Composable
 fun RouteListItem(
     route: Track,
@@ -229,7 +234,7 @@ fun RouteListItem(
         )
         if ((route.image) != null) {
             Image(
-                painter = BitmapPainter(route.image.asImageBitmap()) ,
+                painter = BitmapPainter(route.image.asImageBitmap()),
                 contentDescription = "Route image",
                 modifier = Modifier
                     .constrainAs(routeImage) {
@@ -242,7 +247,7 @@ fun RouteListItem(
             )
         } else {
             Image(
-                painter = painterResource(R.drawable.placeholder) ,
+                painter = painterResource(R.drawable.placeholder),
                 contentDescription = "Route image",
                 modifier = Modifier
                     .constrainAs(routeImage) {

@@ -11,7 +11,7 @@ import com.example.geotrack.data.location.TrackRepositoryImpl
 import com.example.geotrack.domain.routeTracking.TrackInteractor
 import com.example.geotrack.domain.routeTracking.TrackRepository
 import com.example.geotrack.domain.routeTracking.impl.TrackInteractorImpl
-import com.example.geotrack.ui.user_profile.viewModel.HistoryViewModel
+import com.example.geotrack.ui.user_profile.viewModel.UserProfileViewModel
 import com.example.geotrack.util.GpxConverter
 import org.koin.android.ext.koin.androidContext
 import org.koin.androidx.viewmodel.dsl.viewModel
@@ -29,5 +29,5 @@ val storageModule = module {
     single<ContentResolver> { androidContext().contentResolver }
     single<GpxConverter> { GpxConverter() }
     single<LocalImageStorageHandler> {LocalImageStorageHandlerImpl(get(), androidContext())}
-    viewModel<HistoryViewModel> {HistoryViewModel(get())}
+    viewModel<UserProfileViewModel> {UserProfileViewModel(get(), get())}
 }

@@ -10,5 +10,5 @@ data class UserProfileEntity(
     val height: Int,
     val weight: Int,
     val completedRoutes: Int = 0,
-    val profileImageUri: String? = null
+    val profileImageFilepath: String? = null
 )

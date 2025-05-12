@@ -62,11 +62,10 @@ fun ProfileCreation(
         contract = ActivityResultContracts.PickVisualMedia()
     ) { uri ->
         uri?.let {
-            viewModel.setProfileImage(it)
-            viewModel.setProfileImage(it)
             scope.launch(Dispatchers.IO) {
                 loadImageBitmap(context.contentResolver, it)?.let { bmp ->
                     bitmap.value = bmp.asAndroidBitmap()
+                    viewModel.setProfileImage(bmp.asAndroidBitmap())
                 }
             }
         }
@@ -113,7 +112,7 @@ fun ProfileCreation(
                         color = MaterialTheme.colorScheme.tertiary,
                         shape = CircleShape
                     )
-                if (state.profileImageUri != null) {
+                if (state.profileImageBitmap != null) {
                     bitmap.value?.let { bitmap ->
                         Image(
                             bitmap = bitmap.asImageBitmap(),
