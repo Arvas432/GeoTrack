@@ -8,5 +8,7 @@ data class TrackingState(
     val totalDistance: String = "0 км",
     val elapsedTime: String = "0:00",
     val isPaused: Boolean = false,
-    val isTracking: Boolean = false
+    val isTracking: Boolean = false,
+    val avgSpeed: String = "0 км/ч",
+    val calories: String = "0"
 )

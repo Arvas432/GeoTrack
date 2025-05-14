@@ -18,4 +18,9 @@
     <string name="create_profile">Создать профиль</string>
     <string name="profile_image">Изображение профиля</string>
     <string name="add_image">Добавить изображение</string>
+    <string name="route">Маршрут</string>
+    <string name="route_name">Название маршрута</string>
+    <string name="calories">Калории</string>
+    <string name="save">Сохранить</string>
+    <string name="delete">Удалить</string>
 </resources>

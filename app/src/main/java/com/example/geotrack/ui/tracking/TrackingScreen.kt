@@ -54,13 +54,19 @@ import org.osmdroid.views.overlay.Polyline
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.content.res.AppCompatResources
+import androidx.compose.foundation.layout.Column
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.collectAsState
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.drawable.toBitmap
 import androidx.lifecycle.lifecycleScope
+import com.example.geotrack.ui.common_ui_components.DefaultButton
+import com.example.geotrack.ui.common_ui_components.HintedLabellessTextField
 import com.example.geotrack.ui.tracking.state.TrackingIntent
 import com.example.geotrack.util.MapUtils
 import kotlinx.coroutines.Dispatchers
@@ -73,6 +79,7 @@ import org.osmdroid.util.GeoPoint
 import kotlin.math.max
 import kotlin.math.min
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Preview
 @Composable
 fun TrackingScreen(viewModel: TrackingViewModel = koinViewModel()) {
@@ -80,6 +87,9 @@ fun TrackingScreen(viewModel: TrackingViewModel = koinViewModel()) {
     val state by viewModel.state.collectAsState()
     val lifecycleOwner = LocalLifecycleOwner.current
     var showBottomSheet by remember { mutableStateOf(false) }
+    val bottomSheetState = rememberModalBottomSheetState(
+        skipPartiallyExpanded = true
+    )
     val lineColor = MaterialTheme.colorScheme.secondary.toArgb()
     var hasLocationPermission by remember { mutableStateOf(false) }
     val permissionLauncher = rememberLauncherForActivityResult(
@@ -99,7 +109,6 @@ fun TrackingScreen(viewModel: TrackingViewModel = koinViewModel()) {
         }
     }
 
-
     Scaffold(
         modifier = Modifier.background(MaterialTheme.colorScheme.primary),
         topBar = {
@@ -113,13 +122,14 @@ fun TrackingScreen(viewModel: TrackingViewModel = koinViewModel()) {
             )
         },
     ) { paddingValues ->
+        var mapView by remember { mutableStateOf<MapView?>(null) }
         ConstraintLayout(
             modifier = Modifier
                 .padding(paddingValues)
                 .background(MaterialTheme.colorScheme.primary)
         ) {
             val (map, stopButton, pauseButton, abandonButton) = createRefs()
-            var mapView by remember { mutableStateOf<MapView?>(null) }
+
             AndroidView(
                 modifier = Modifier.constrainAs(map) {
                     top.linkTo(parent.top)
@@ -189,7 +199,13 @@ fun TrackingScreen(viewModel: TrackingViewModel = koinViewModel()) {
 
                     }) {
                 Icon(
-                    imageVector = if (!state.isPaused) Pause else Icons.Filled.PlayArrow,
+                    imageVector = if (!state.isPaused && state.isTracking) {
+                        Pause
+                    } else if (!state.isTracking) {
+                        Icons.Filled.PlayArrow
+                    } else {
+                        Icons.Filled.PlayArrow
+                    },
                     contentDescription = "Tracking controls, pause",
                     tint = MaterialTheme.colorScheme.onSecondary,
                     modifier = Modifier.size(48.dp)
@@ -208,20 +224,9 @@ fun TrackingScreen(viewModel: TrackingViewModel = koinViewModel()) {
                         end.linkTo(pauseButton.start)
                     }
                     .clickable {
-                        mapView?.let {
-                            lifecycleOwner.lifecycleScope.launch {
-                                val snapshot = createMapSnapshot(it, state.geoPoints, lineColor)
-                                viewModel.processIntent(
-                                    TrackingIntent.StopTracking(
-                                        snapshot ?: AppCompatResources
-                                            .getDrawable(
-                                                context,
-                                                R.drawable.placeholder
-                                            )
-                                            ?.toBitmap(640, 480)
-                                    )
-                                )
-                            }
+                        if (state.isTracking || state.isPaused) {
+                            viewModel.processIntent(TrackingIntent.ToggleTrackingEndMenu)
+                            showBottomSheet = true
                         }
                     }) {
                 Icon(
@@ -254,6 +259,84 @@ fun TrackingScreen(viewModel: TrackingViewModel = koinViewModel()) {
                 )
             }
 
+        }
+        if (showBottomSheet) {
+            ModalBottomSheet(
+                sheetState = bottomSheetState,
+                onDismissRequest = {
+                    showBottomSheet = false
+                },
+                content = {
+                    HintedLabellessTextField(
+                        stringResource(R.string.route),
+                        stringResource(R.string.route_name),
+                        onTextChanged = {},
+                        Modifier.padding(start = 14.dp, end = 18.dp, top = 16.dp)
+                    )
+                    Row(
+                        verticalAlignment = Alignment.Bottom,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 12.dp, vertical = 20.dp)
+                    ) {
+                        ValueWithHeader(
+                            stringResource(R.string.avg_speed),
+                            state.avgSpeed,
+                            Modifier.weight(1F)
+                        )
+                        ValueWithHeader(
+                            stringResource(R.string.distance),
+                            state.totalDistance,
+                            Modifier.weight(1F)
+                        )
+                        ValueWithHeader(
+                            stringResource(R.string.time),
+                            state.elapsedTime,
+                            Modifier.weight(1F)
+                        )
+                        ValueWithHeader(
+                            stringResource(R.string.calories),
+                            state.calories,
+                            Modifier.weight(1F)
+                        )
+                    }
+                    Row(
+                        verticalAlignment = Alignment.Bottom,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 12.dp)
+                    ) {
+                        DefaultButton(
+                            text = stringResource(R.string.delete),
+                            modifier = Modifier.weight(1F)
+                        ) {
+                            viewModel.processIntent(TrackingIntent.AbandonTracking)
+                            showBottomSheet = false
+                        }
+                        DefaultButton(
+                            text = stringResource(R.string.save), modifier = Modifier
+                                .weight(1F)
+                                .padding(start = 10.dp)
+                        ) {
+                            mapView?.let {
+                                lifecycleOwner.lifecycleScope.launch {
+                                    val snapshot = createMapSnapshot(it, state.geoPoints, lineColor)
+                                    viewModel.processIntent(
+                                        TrackingIntent.StopTracking(
+                                            snapshot ?: AppCompatResources
+                                                .getDrawable(
+                                                    context,
+                                                    R.drawable.placeholder
+                                                )
+                                                ?.toBitmap(640, 480)
+                                        )
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            )
         }
 
     }
@@ -306,7 +389,6 @@ fun RouteParameters(speed: String, distance: String, time: String, modifier: Mod
 }
 
 
-
 suspend fun createMapSnapshot(
     mapView: MapView,
     geoPoints: List<GeoPoint>,
@@ -320,7 +402,7 @@ suspend fun createMapSnapshot(
     delay(500)
     val bitmap = Bitmap.createBitmap(
         max(mapView.width, mapView.height) + bufferPixels,
-        min(mapView.width, mapView.height)+ bufferPixels,
+        min(mapView.width, mapView.height) + bufferPixels,
         Bitmap.Config.ARGB_8888
     ).also {
         val canvas = Canvas(it)

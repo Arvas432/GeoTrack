@@ -17,6 +17,6 @@ import org.koin.dsl.module
 
 val locationModule = module {
     single<GeoRepository> { GeoRepositoryImpl(androidContext()) }
-    viewModel { TrackingViewModel(get(), get()) }
+    viewModel { TrackingViewModel(get(), get(), get(), get()) }
 
 }

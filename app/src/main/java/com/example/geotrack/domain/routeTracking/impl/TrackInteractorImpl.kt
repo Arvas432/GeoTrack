@@ -47,9 +47,6 @@ class TrackInteractorImpl(
         )
 
         trackRepository.saveTrack(track)
-        trackRepository.getAllTracks().collect {
-            Log.i("МАРШРУТЫ", it.toString())
-        }
 
     }
 }

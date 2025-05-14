@@ -23,7 +23,6 @@ class TrackRepositoryImpl(
         if (track.image != null) {
             imagePath =
                 storageHandler.createImageFile(track.image, track.name + System.currentTimeMillis())
-            Log.i("КАРТИНКА ПРИ СОХРАНЕНИИ", imagePath.toString())
         }
         trackDao.insert(TrackMapper.mapModelToEntity(track, imagePath))
     }

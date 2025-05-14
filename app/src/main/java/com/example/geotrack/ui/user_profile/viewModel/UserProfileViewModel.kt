@@ -41,7 +41,7 @@ class UserProfileViewModel(
     }
 
 
-    fun loadTracks() {
+    private fun loadTracks() {
         viewModelScope.launch {
             _state.update { it.copy(isLoading = true, error = null) }
             try {
