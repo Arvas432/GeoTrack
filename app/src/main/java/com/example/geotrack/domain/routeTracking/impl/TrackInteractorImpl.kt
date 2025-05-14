@@ -24,6 +24,7 @@ class TrackInteractorImpl(
     override suspend fun saveTrack(
         gpxPoints: List<GpxPoint>,
         geoPoints: List<GeoPoint>,
+        name: String,
         image: Bitmap?,
         startTime: Long,
         endTime: Long
@@ -36,7 +37,7 @@ class TrackInteractorImpl(
         val gpxData = geoConverter.convertToGpx(gpxPoints, "Track")
 
         val track = Track(
-            name = generateTrackName(startTime),
+            name = name,
             date = Instant.ofEpochMilli(startTime),
             duration = duration.toDuration(unit = DurationUnit.MILLISECONDS),
             distance = totalDistance,

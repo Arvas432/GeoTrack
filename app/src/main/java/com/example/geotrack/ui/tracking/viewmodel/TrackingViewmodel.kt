@@ -35,7 +35,6 @@ class TrackingViewModel(
     private val _state = MutableStateFlow(TrackingState())
     val state: StateFlow<TrackingState> = _state.asStateFlow()
     private var gpxPoints: MutableList<GpxPoint> = mutableListOf()
-
     private var startTime: Long = 0L
     private var endTime: Long = 0L
     private var pauseOffset: Long = 0L
@@ -48,6 +47,7 @@ class TrackingViewModel(
             TrackingIntent.ToggleTrackingEndMenu -> calculateRouteParametersBeforeSaving()
             TrackingIntent.TogglePause -> togglePause()
             TrackingIntent.AbandonTracking -> abandonTracking()
+            is TrackingIntent.UpdateRouteName -> _state.update { it.copy(routeName = intent.text) }
             is TrackingIntent.UpdateLocation -> updateState(intent.point, intent.speed)
         }
     }
@@ -132,6 +132,7 @@ class TrackingViewModel(
                 trackInteractor.saveTrack(
                     gpxPoints = gpxPoints,
                     geoPoints = points,
+                    name = _state.value.routeName,
                     startTime = startTime,
                     endTime = endTime,
                     image = bitmap

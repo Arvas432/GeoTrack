@@ -10,4 +10,5 @@ sealed class TrackingIntent {
     object AbandonTracking : TrackingIntent()
     object TogglePause : TrackingIntent()
     data class UpdateLocation(val point: GeoPoint, val speed: Float) : TrackingIntent()
+    data class UpdateRouteName(val text: String): TrackingIntent()
 }

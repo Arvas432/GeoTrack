@@ -268,9 +268,11 @@ fun TrackingScreen(viewModel: TrackingViewModel = koinViewModel()) {
                 },
                 content = {
                     HintedLabellessTextField(
-                        stringResource(R.string.route),
+                        state.routeName,
                         stringResource(R.string.route_name),
-                        onTextChanged = {},
+                        onTextChanged = {
+                            viewModel.processIntent(TrackingIntent.UpdateRouteName(it))
+                        },
                         Modifier.padding(start = 14.dp, end = 18.dp, top = 16.dp)
                     )
                     Row(
@@ -333,6 +335,7 @@ fun TrackingScreen(viewModel: TrackingViewModel = koinViewModel()) {
                                     )
                                 }
                             }
+                            showBottomSheet = false
                         }
                     }
                 }
@@ -401,7 +404,7 @@ suspend fun createMapSnapshot(
     mapView.zoomToBoundingBox(boundingBox, true)
     delay(500)
     val bitmap = Bitmap.createBitmap(
-        max(mapView.width, mapView.height) + bufferPixels,
+        min(mapView.width, mapView.height) + bufferPixels,
         min(mapView.width, mapView.height) + bufferPixels,
         Bitmap.Config.ARGB_8888
     ).also {
