@@ -184,7 +184,7 @@ fun TrackingScreen(viewModel: TrackingViewModel = koinViewModel()) {
                     .clip(CircleShape)
                     .background(MaterialTheme.colorScheme.secondary)
                     .size(100.dp)
-                    .padding(bottom = 10.dp)
+                    .clip(CircleShape)
                     .constrainAs(pauseButton) {
                         bottom.linkTo(parent.bottom)
                         start.linkTo(parent.start)
@@ -217,7 +217,7 @@ fun TrackingScreen(viewModel: TrackingViewModel = koinViewModel()) {
                     .clip(CircleShape)
                     .size(70.dp)
                     .background(MaterialTheme.colorScheme.secondary)
-                    .padding(bottom = 25.dp)
+                    .clip(CircleShape)
                     .constrainAs(stopButton) {
                         bottom.linkTo(parent.bottom)
                         start.linkTo(parent.start)
@@ -233,7 +233,7 @@ fun TrackingScreen(viewModel: TrackingViewModel = koinViewModel()) {
                     imageVector = Stop,
                     contentDescription = "Tracking controls, finish",
                     tint = MaterialTheme.colorScheme.onSecondary,
-                    modifier = Modifier.padding(top = 20.dp)
+                    modifier = Modifier
                 )
             }
             Box(
@@ -242,7 +242,7 @@ fun TrackingScreen(viewModel: TrackingViewModel = koinViewModel()) {
                     .clip(CircleShape)
                     .background(MaterialTheme.colorScheme.secondary)
                     .size(70.dp)
-                    .padding(bottom = 25.dp)
+                    .clip(CircleShape)
                     .constrainAs(abandonButton) {
                         bottom.linkTo(parent.bottom)
                         start.linkTo(pauseButton.end)
@@ -255,7 +255,7 @@ fun TrackingScreen(viewModel: TrackingViewModel = koinViewModel()) {
                     imageVector = Abandon,
                     contentDescription = "Tracking controls, abandon",
                     tint = MaterialTheme.colorScheme.onSecondary,
-                    modifier = Modifier.padding(top = 20.dp)
+                    modifier = Modifier
                 )
             }
 
@@ -402,7 +402,7 @@ suspend fun createMapSnapshot(
     val boundingBox = MapUtils.createSquareBoundingBox(geoPoints)
     val bufferPixels = 100
     mapView.zoomToBoundingBox(boundingBox, true)
-    delay(500)
+    delay(1000)
     val bitmap = Bitmap.createBitmap(
         min(mapView.width, mapView.height) + bufferPixels,
         min(mapView.width, mapView.height) + bufferPixels,

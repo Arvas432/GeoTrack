@@ -157,23 +157,28 @@ class TrackingViewModel(
     private fun calculateRouteParametersBeforeSaving() {
         viewModelScope.launch {
             val distance = geoConverter.calculateTotalDistance(_state.value.geoPoints)
+            Log.i("Distance", distance.toString())
             val currentDuration = System.currentTimeMillis() - startTime
+            Log.i("Duration", currentDuration.toString())
             val avgSpeed = geoConverter.calculateAverageSpeed(
                 distanceKm = distance,
                 durationMs = currentDuration
             )
-            val weight = profileInteractor.getProfile()?.weight ?: 50
+            Log.i("Avg speed", avgSpeed.toString())
+            val weight = profileInteractor.getProfile()?.weight ?: 70
+            Log.i("weight", weight.toString())
             val caloriesBurned = CalorieCalculator.calculateCaloriesBurned(
                 distanceKm = distance,
                 avgSpeedKmH = avgSpeed,
-                (currentDuration / 3600000).toDouble(),
+                currentDuration.toDouble() / 3600000F,
                 weightKg = weight.toDouble()
             )
+            Log.i("Calories", caloriesBurned.toString())
             _state.update {
                 it.copy(
                     totalDistance = "${Math.round(distance * 10.0) / 10.0} км",
                     avgSpeed = "${Math.round(avgSpeed * 10.0) / 10.0} км/ч",
-                    calories = caloriesBurned.toString()
+                    calories = Math.round((caloriesBurned * 10) / 10.0).toString()
                 )
             }
         }

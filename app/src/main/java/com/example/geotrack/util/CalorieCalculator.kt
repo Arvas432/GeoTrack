@@ -1,5 +1,7 @@
 package com.example.geotrack.util
 
+import android.util.Log
+
 object CalorieCalculator {
     fun calculateCaloriesBurned(
         distanceKm: Double,
@@ -8,6 +10,7 @@ object CalorieCalculator {
         weightKg: Double,
     ): Double {
         val met = getMETForSpeed(avgSpeedKmH)
+        Log.i("met", met.toString())
         return met * weightKg * timeHours
     }
 
