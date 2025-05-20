@@ -14,13 +14,16 @@ import androidx.compose.material.icons.filled.Home
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.wear.compose.material.MaterialTheme
+import com.example.geotrack.domain.auth.TokenStorage
 import com.example.geotrack.ui.authorization.LoginScreen
 import com.example.geotrack.ui.model.Screens
 import com.example.geotrack.ui.theme.GeoTrackTheme
@@ -32,6 +35,7 @@ import com.example.geotrack.ui.profile_creation.ProfileCreation
 import com.example.geotrack.ui.social.RoutesScreen
 import com.example.geotrack.ui.tracking.TrackingScreen
 import com.example.geotrack.ui.user_profile.ProfileScreen
+import org.koin.android.ext.android.inject
 import org.osmdroid.config.Configuration
 import org.osmdroid.library.BuildConfig
 
@@ -67,34 +71,54 @@ data class BottomNavigationItem(
 }
 
 class MainActivity : ComponentActivity() {
+    private val tokenStorage: TokenStorage by inject()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        Configuration.getInstance().load(applicationContext, getDefaultSharedPreferences(applicationContext));
+        Configuration.getInstance()
+            .load(applicationContext, getDefaultSharedPreferences(applicationContext));
         Configuration.getInstance().userAgentValue = BuildConfig.APPLICATION_ID;
+        val showAuth = tokenStorage.getToken() == null
         setContent {
             GeoTrackTheme {
-                MyApp()
+                MyApp(showAuth)
             }
         }
     }
 }
 
 @Composable
-fun MyApp() {
+fun MyApp(showAuth: Boolean) {
+    val bottomBarHiddenRoutes = listOf(
+        "auth_route",
+        "profile_creation_route"
+    )
+
     val navController = rememberNavController()
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentRoute = navBackStackEntry?.destination?.route
     Scaffold(
         modifier = Modifier.background(MaterialTheme.colors.primary),
-        bottomBar = { BottomNavigationBar(navController) }
+        bottomBar = {
+            if (currentRoute !in bottomBarHiddenRoutes) {
+                BottomNavigationBar(navController)
+            }
+        }
     ) { innerPadding ->
-        NavHostContainer(navController, Modifier.padding(innerPadding).background(MaterialTheme.colors.primary))
+        NavHostContainer(
+            navController,
+            showAuth,
+            Modifier
+                .padding(innerPadding)
+                .background(MaterialTheme.colors.primary)
+        )
     }
 }
 
 @Composable
-fun NavHostContainer(navController: NavHostController, modifier: Modifier) {
-    NavHost(navController, startDestination = "profile_creation_route", modifier = modifier) {
-        composable("auth_route") { LoginScreen() }
+fun NavHostContainer(navController: NavHostController, showAuth: Boolean, modifier: Modifier) {
+    NavHost(navController, startDestination = if (showAuth) "auth_route" else "tracking_route", modifier = modifier) {
+        composable("auth_route") { LoginScreen(navController = navController) }
         composable("settings_route") { SettingsScreen() }
         composable("tracking_route") { TrackingScreen() }
         composable("feed_route") { RoutesScreen() }
@@ -102,7 +126,6 @@ fun NavHostContainer(navController: NavHostController, modifier: Modifier) {
         composable("profile_creation_route") { ProfileCreation(navController = navController) }
     }
 }
-
 
 
 @Composable

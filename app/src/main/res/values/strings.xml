@@ -23,4 +23,15 @@
     <string name="calories">Калории</string>
     <string name="save">Сохранить</string>
     <string name="delete">Удалить</string>
+    <string name="example_gmail_com">example@gmail.com</string>
+    <string name="login">Вход</string>
+    <string name="username">Логин</string>
+    <string name="enter_password">Введите пароль</string>
+    <string name="password">Пароль</string>
+    <string name="log_in">Войти</string>
+    <string name="no_account">"Нету аккаунта? "</string>
+    <string name="register">"Зарегистрироваться "</string>
+    <string name="loading_">Загрузка...</string>
+    <string name="already_have_an_account">Уже есть аккаунт?</string>
+    <string name="registration">Регистрация</string>
 </resources>

@@ -69,7 +69,7 @@ dependencies {
     implementation(libs.gson)
     implementation(libs.converter.gson)
     implementation(libs.logging.interceptor)
-
+    implementation(libs.androidx.security.crypto)
 
     implementation(libs.androidx.material3)
     implementation(libs.androidx.compose.material)
