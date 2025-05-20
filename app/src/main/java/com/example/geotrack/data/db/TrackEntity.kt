@@ -5,11 +5,13 @@ import androidx.room.PrimaryKey
 
 @Entity(tableName = "tracks")
 data class TrackEntity(
-    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    @PrimaryKey(autoGenerate = false) val id: Long,
     val name: String,
     val date: Long,
     val duration: Long,
     val distance: Double,
     val averageSpeed: Double,
-    val gpxData: String
+    val gpxData: String?,
+    val likes: Int?,
+    val imageFilePath: String?
 )

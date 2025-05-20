@@ -1,5 +1,6 @@
 package com.example.geotrack.domain.routeTracking.impl
 
+import android.graphics.Bitmap
 import android.util.Log
 import com.example.geotrack.domain.routeTracking.TrackInteractor
 import com.example.geotrack.domain.routeTracking.TrackRepository
@@ -16,34 +17,38 @@ class TrackInteractorImpl(
     private val geoConverter: GpxConverter
 ) :
     TrackInteractor {
+    private fun generateTrackName(timestamp: Long): String {
+        return "Track ${Instant.ofEpochMilli(timestamp)}"
+    }
+
     override suspend fun saveTrack(
         gpxPoints: List<GpxPoint>,
         geoPoints: List<GeoPoint>,
+        name: String,
+        image: Bitmap?,
         startTime: Long,
         endTime: Long
     ) {
         require(gpxPoints.isNotEmpty() && geoPoints.isNotEmpty()) { "Cannot save empty track" }
         val totalDistance = geoConverter.calculateTotalDistance(geoPoints)
         val duration = endTime - startTime
+        Log.i("DURATION", duration.toString())
         val averageSpeed = geoConverter.calculateAverageSpeed(totalDistance, duration)
         val gpxData = geoConverter.convertToGpx(gpxPoints, "Track")
 
         val track = Track(
-            name = generateTrackName(startTime),
+            id = System.currentTimeMillis(),
+            name = name,
             date = Instant.ofEpochMilli(startTime),
-            duration = duration.toDuration(unit = DurationUnit.MINUTES),
+            duration = duration.toDuration(unit = DurationUnit.MILLISECONDS),
             distance = totalDistance,
             averageSpeed = averageSpeed,
-            gpxData = gpxData
+            gpxData = gpxData,
+            likes = 0,
+            image = image
         )
 
         trackRepository.saveTrack(track)
-        trackRepository.getAllTracks().collect {
-            Log.i("МАРШРУТЫ", it.toString())
-        }
 
-    }
-    private fun generateTrackName(timestamp: Long): String {
-        return "Track ${Instant.ofEpochMilli(timestamp)}"
     }
 }

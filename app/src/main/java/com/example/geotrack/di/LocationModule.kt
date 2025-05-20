@@ -17,13 +17,6 @@ import org.koin.dsl.module
 
 val locationModule = module {
     single<GeoRepository> { GeoRepositoryImpl(androidContext()) }
-    viewModel { TrackingViewModel(get(), get()) }
-    factory<TrackInteractor> { TrackInteractorImpl(get(), get()) }
-    single { Room.databaseBuilder(
-        get(),
-        AppDatabase::class.java, "tracks-db"
-    ).build() }
-    single<TrackDao> { get<AppDatabase>().trackDao() }
-    single<TrackRepository> { TrackRepositoryImpl(get()) }
-    single<GpxConverter> { GpxConverter() }
+    viewModel { TrackingViewModel(get(), get(), get(), get()) }
+
 }

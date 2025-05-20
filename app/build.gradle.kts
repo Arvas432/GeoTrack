@@ -3,8 +3,9 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     kotlin("kapt")
+    id("org.jetbrains.kotlin.plugin.serialization") version "2.1.21"
 }
-
+tasks.register("testClasses")
 android {
     namespace = "com.example.geotrack"
     compileSdk = 35
@@ -54,11 +55,21 @@ dependencies {
 
     implementation("io.insert-koin:koin-android:3.5.0")
     implementation("io.insert-koin:koin-androidx-compose:3.5.0")
-    implementation("androidx.compose.runtime:runtime:1.6.0")
-    implementation("androidx.compose.runtime:runtime-livedata:1.6.0")
-    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.7.0")
-    implementation("androidx.lifecycle:lifecycle-runtime-compose:2.7.0")
-    implementation("androidx.compose.runtime:runtime:1.6.0")
+    implementation("androidx.compose.runtime:runtime:1.8.1")
+    implementation("androidx.compose.runtime:runtime-livedata:1.8.1")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.9.0")
+    implementation("androidx.lifecycle:lifecycle-runtime-compose:2.9.0")
+    implementation("androidx.compose.runtime:runtime:1.8.1")
+    implementation("androidx.exifinterface:exifinterface:1.4.1")
+    implementation("io.coil-kt:coil-compose:2.5.0")
+
+    implementation(libs.retrofit)
+    implementation(libs.kotlinx.serialization.json)
+    implementation(libs.androidx.lifecycle.viewmodel.ktx)
+    implementation(libs.gson)
+    implementation(libs.converter.gson)
+    implementation(libs.logging.interceptor)
+    implementation(libs.androidx.security.crypto)
 
     implementation(libs.androidx.material3)
     implementation(libs.androidx.compose.material)

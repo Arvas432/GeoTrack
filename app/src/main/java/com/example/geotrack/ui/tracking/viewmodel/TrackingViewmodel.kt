@@ -1,45 +1,53 @@
 package com.example.geotrack.ui.tracking.viewmodel
 
 
+import android.graphics.Bitmap
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.geotrack.domain.profile.UserProfileInteractor
 import com.example.geotrack.domain.routeTracking.GeoRepository
 import com.example.geotrack.domain.routeTracking.TrackInteractor
 import com.example.geotrack.domain.routeTracking.model.GpxPoint
 import com.example.geotrack.ui.tracking.state.TrackingIntent
+import com.example.geotrack.ui.tracking.state.TrackingIntent.StopTracking
 import com.example.geotrack.ui.tracking.state.TrackingState
+import com.example.geotrack.util.CalorieCalculator
+import com.example.geotrack.util.GpxConverter
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.osmdroid.util.GeoPoint
-import java.util.concurrent.TimeUnit
+import kotlin.math.max
+import kotlin.time.toDuration
 
 
 class TrackingViewModel(
     private val repository: GeoRepository,
-    private val trackInteractor: TrackInteractor
+    private val trackInteractor: TrackInteractor,
+    private val geoConverter: GpxConverter,
+    private val profileInteractor: UserProfileInteractor
 ) : ViewModel() {
     private val _state = MutableStateFlow(TrackingState())
     val state: StateFlow<TrackingState> = _state.asStateFlow()
     private var gpxPoints: MutableList<GpxPoint> = mutableListOf()
-
     private var startTime: Long = 0L
     private var endTime: Long = 0L
     private var pauseOffset: Long = 0L
     private var locationJob: Job? = null
     private var timerJob: Job? = null
-
     fun processIntent(intent: TrackingIntent) {
         when (intent) {
             TrackingIntent.StartTracking -> startTracking()
-            TrackingIntent.StopTracking -> stopTracking()
+            is StopTracking -> stopTracking(intent.mapBitmap)
+            TrackingIntent.ToggleTrackingEndMenu -> calculateRouteParametersBeforeSaving()
             TrackingIntent.TogglePause -> togglePause()
             TrackingIntent.AbandonTracking -> abandonTracking()
+            is TrackingIntent.UpdateRouteName -> _state.update { it.copy(routeName = intent.text) }
             is TrackingIntent.UpdateLocation -> updateState(intent.point, intent.speed)
         }
     }
@@ -50,9 +58,6 @@ class TrackingViewModel(
         startLocationUpdates()
     }
 
-    private fun stopTracking() {
-        saveTrack()
-    }
 
     private fun abandonTracking() {
         _state.update {
@@ -69,10 +74,10 @@ class TrackingViewModel(
         timerJob?.cancel()
         gpxPoints.clear()
     }
+
     private fun startLocationUpdates() {
         locationJob = viewModelScope.launch {
             repository.getLocationUpdates()
-                .catch { e -> /* Handle error */ }
                 .collect { location ->
                     processIntent(
                         TrackingIntent.UpdateLocation(
@@ -84,7 +89,7 @@ class TrackingViewModel(
                 }
         }
         timerJob = viewModelScope.launch {
-            while(state.value.isTracking) {
+            while (state.value.isTracking) {
                 delay(1000)
                 _state.update {
                     it.copy(
@@ -116,11 +121,22 @@ class TrackingViewModel(
         }
     }
 
-    private fun saveTrack() {
+    private fun stopTracking(bitmap: Bitmap?) {
         viewModelScope.launch {
+            Log.i("BITMAP", bitmap.toString())
+            endTime = System.currentTimeMillis()
             val points = _state.value.geoPoints
             if (points.isNotEmpty()) {
-                trackInteractor.saveTrack(gpxPoints = gpxPoints, geoPoints = points, startTime = startTime, endTime = endTime)
+                Log.i("НАЧАЛО", startTime.toString())
+                Log.i("КОНЕЦ", endTime.toString())
+                trackInteractor.saveTrack(
+                    gpxPoints = gpxPoints,
+                    geoPoints = points,
+                    name = _state.value.routeName,
+                    startTime = startTime,
+                    endTime = endTime,
+                    image = bitmap
+                )
             }
             timerJob?.cancel()
             gpxPoints.clear()
@@ -138,25 +154,59 @@ class TrackingViewModel(
         }
     }
 
+    private fun calculateRouteParametersBeforeSaving() {
+        viewModelScope.launch {
+            val distance = geoConverter.calculateTotalDistance(_state.value.geoPoints)
+            Log.i("Distance", distance.toString())
+            val currentDuration = System.currentTimeMillis() - startTime
+            Log.i("Duration", currentDuration.toString())
+            val avgSpeed = geoConverter.calculateAverageSpeed(
+                distanceKm = distance,
+                durationMs = currentDuration
+            )
+            Log.i("Avg speed", avgSpeed.toString())
+            val weight = profileInteractor.getProfile()?.weight ?: 70
+            Log.i("weight", weight.toString())
+            val caloriesBurned = CalorieCalculator.calculateCaloriesBurned(
+                distanceKm = distance,
+                avgSpeedKmH = avgSpeed,
+                currentDuration.toDouble() / 3600000F,
+                weightKg = weight.toDouble()
+            )
+            Log.i("Calories", caloriesBurned.toString())
+            _state.update {
+                it.copy(
+                    totalDistance = "${Math.round(distance * 10.0) / 10.0} км",
+                    avgSpeed = "${Math.round(avgSpeed * 10.0) / 10.0} км/ч",
+                    calories = Math.round((caloriesBurned * 10) / 10.0).toString()
+                )
+            }
+        }
+    }
+
     private fun calculateTotalDistance(points: List<GeoPoint>): String {
         if (points.size < 2) return "0 км"
         var distance = 0.0
         for (i in 1 until points.size) {
-            distance += points[i-1].distanceToAsDouble(points[i])
+            distance += points[i - 1].distanceToAsDouble(points[i])
         }
         return "%.2f км".format(distance / 1000)
     }
 
-    private fun calculateAverageSpeed(distanceKm: Double, durationMs: Long): Double {
-        if (durationMs == 0L) return 0.0
-        val hours = durationMs.toDouble() / 1000 / 3600
-        return distanceKm / hours
-    }
 
     private fun calculateElapsedTime(): String {
-        val currentTime = if (_state.value.isPaused) pauseOffset else System.currentTimeMillis() - startTime
-        val minutes = (currentTime / 1000) / 60
-        val seconds = (currentTime / 1000) % 60
+        val currentTime = when {
+            _state.value.isPaused -> pauseOffset
+            _state.value.isTracking -> System.currentTimeMillis() - startTime
+            else -> 0L
+        }
+
+        val safeTime = max(currentTime, 0L)
+
+        val totalSeconds = safeTime / 1000
+        val minutes = totalSeconds / 60
+        val seconds = totalSeconds % 60
+
         return "%d:%02d".format(minutes, seconds)
     }
 

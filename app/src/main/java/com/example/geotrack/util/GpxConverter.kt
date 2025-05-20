@@ -11,7 +11,7 @@ class GpxConverter {
         for (i in 1 until points.size) {
             distance += points[i-1].distanceToAsDouble(points[i])
         }
-        return distance / 1000 // convert to kilometers
+        return distance / 1000
     }
 
     fun calculateAverageSpeed(distanceKm: Double, durationMs: Long): Double {

@@ -11,4 +11,27 @@
     <string name="km">" км"</string>
     <string name="routes_screen">Маршруты</string>
     <string name="speed">Скорость</string>
+    <string name="mins"> мин</string>
+    <string name="your_name">Ваше имя</string>
+    <string name="your_height">Ваш рост</string>
+    <string name="your_weight">Ваш вес</string>
+    <string name="create_profile">Создать профиль</string>
+    <string name="profile_image">Изображение профиля</string>
+    <string name="add_image">Добавить изображение</string>
+    <string name="route">Маршрут</string>
+    <string name="route_name">Название маршрута</string>
+    <string name="calories">Калории</string>
+    <string name="save">Сохранить</string>
+    <string name="delete">Удалить</string>
+    <string name="example_gmail_com">example@gmail.com</string>
+    <string name="login">Вход</string>
+    <string name="username">Логин</string>
+    <string name="enter_password">Введите пароль</string>
+    <string name="password">Пароль</string>
+    <string name="log_in">Войти</string>
+    <string name="no_account">"Нету аккаунта? "</string>
+    <string name="register">"Зарегистрироваться "</string>
+    <string name="loading_">Загрузка...</string>
+    <string name="already_have_an_account">Уже есть аккаунт?</string>
+    <string name="registration">Регистрация</string>
 </resources>

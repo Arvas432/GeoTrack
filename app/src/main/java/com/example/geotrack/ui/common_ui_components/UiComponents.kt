@@ -52,7 +52,7 @@ fun BottomNavigationBar(navController: NavHostController) {
         mutableIntStateOf(0)
     }
 
-    NavigationBar {
+    NavigationBar(modifier = Modifier.background(MaterialTheme.colorScheme.primary)) {
         BottomNavigationItem().bottomNavigationItems()
             .forEachIndexed { index, bottomNavigationItem ->
                 NavigationBarItem(
