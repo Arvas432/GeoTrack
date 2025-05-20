@@ -5,7 +5,7 @@ import java.time.Instant
 import kotlin.time.Duration
 
 data class Track(
-    val id: Long? = null,
+    val id: Long,
     val name: String,
     val date: Instant,
     val duration: Duration,

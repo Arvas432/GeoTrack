@@ -11,7 +11,7 @@
     <string name="km">" км"</string>
     <string name="routes_screen">Маршруты</string>
     <string name="speed">Скорость</string>
-    <string name="mins">мин</string>
+    <string name="mins"> мин</string>
     <string name="your_name">Ваше имя</string>
     <string name="your_height">Ваш рост</string>
     <string name="your_weight">Ваш вес</string>

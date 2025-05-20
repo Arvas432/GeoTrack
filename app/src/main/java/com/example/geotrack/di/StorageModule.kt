@@ -25,7 +25,7 @@ val storageModule = module {
     ).build() }
     single<TrackDao> { get<AppDatabase>().trackDao() }
     single<UserProfileDao> {get<AppDatabase>().userProfileDao()}
-    single<TrackRepository> { TrackRepositoryImpl(get(), get()) }
+    single<TrackRepository> { TrackRepositoryImpl(get(), get(), get(), get()) }
     single<ContentResolver> { androidContext().contentResolver }
     single<GpxConverter> { GpxConverter() }
     single<LocalImageStorageHandler> {LocalImageStorageHandlerImpl(get(), androidContext())}

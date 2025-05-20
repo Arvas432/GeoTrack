@@ -16,7 +16,12 @@ class TokenStorageImpl(context: Context): TokenStorage {
     }
 
     override fun getToken(): String? {
-        return prefs.getString(KEY_TOKEN, null)
+        val token = prefs.getString(KEY_TOKEN, null)
+        return if (token == null) {
+            null
+        } else {
+            "Bearer $token"
+        }
     }
 
     override fun clearToken() {

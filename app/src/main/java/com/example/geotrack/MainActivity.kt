@@ -17,13 +17,17 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.wear.compose.material.MaterialTheme
+import com.example.geotrack.domain.auth.AuthInteractor
+import com.example.geotrack.domain.auth.AuthRepository
 import com.example.geotrack.domain.auth.TokenStorage
+import com.example.geotrack.domain.profile.UserProfileInteractor
 import com.example.geotrack.ui.authorization.LoginScreen
 import com.example.geotrack.ui.model.Screens
 import com.example.geotrack.ui.theme.GeoTrackTheme
@@ -35,6 +39,9 @@ import com.example.geotrack.ui.profile_creation.ProfileCreation
 import com.example.geotrack.ui.social.RoutesScreen
 import com.example.geotrack.ui.tracking.TrackingScreen
 import com.example.geotrack.ui.user_profile.ProfileScreen
+import kotlinx.coroutines.async
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.koin.android.ext.android.inject
 import org.osmdroid.config.Configuration
 import org.osmdroid.library.BuildConfig
@@ -72,6 +79,8 @@ data class BottomNavigationItem(
 
 class MainActivity : ComponentActivity() {
     private val tokenStorage: TokenStorage by inject()
+    private val authInteractor: AuthInteractor by inject()
+    private val userProfileInteractor: UserProfileInteractor by inject()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()

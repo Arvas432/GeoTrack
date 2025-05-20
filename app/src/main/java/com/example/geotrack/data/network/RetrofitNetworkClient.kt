@@ -2,6 +2,7 @@ package com.example.geotrack.data.network
 
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
+import android.util.Log
 import com.example.geotrack.data.network.dto.ApiService
 import com.example.geotrack.data.network.dto.LoginRequest
 import com.example.geotrack.data.network.dto.Response
@@ -54,7 +55,7 @@ class RetrofitNetworkClient(private val apiService: ApiService, private val conn
         return withContext(Dispatchers.IO) {
             try {
                 val tracks = apiService.getTracks(request.token)
-                TracksResponse(tracks.map { TrackMapper.mapDtoToModel(it) })
+                TracksResponse(tracks.map { TrackMapper.mapDtoToModel(it) }).apply { resultCode = SUCCESS }
             } catch (e: Throwable) {
                 Response(ERROR)
             }
@@ -64,6 +65,7 @@ class RetrofitNetworkClient(private val apiService: ApiService, private val conn
         return withContext(Dispatchers.IO) {
             try {
                 apiService.uploadTrack(request.token, TrackMapper.mapModelToDto(request.track, "ЗАГЛУШКА ФУЛ ПОНОС!!!"))
+                Log.i("Загружено", "ага")
                 Response(SUCCESS)
             } catch (e: Throwable) {
                 Response(ERROR)

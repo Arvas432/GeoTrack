@@ -4,8 +4,7 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class TrackDto(
-    val id: Long? = null,
-    val username: String,
+    val localId: Long,
     val name: String,
     val date: String,
     val duration: Long,

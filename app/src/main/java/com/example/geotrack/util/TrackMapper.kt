@@ -4,17 +4,14 @@ import android.graphics.Bitmap
 import com.example.geotrack.data.db.TrackEntity
 import com.example.geotrack.data.network.dto.TrackDto
 import com.example.geotrack.domain.routeTracking.model.Track
-import java.text.SimpleDateFormat
 import java.time.Instant
-import java.util.Date
-import java.util.Locale
-import java.util.TimeZone
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
 
 object TrackMapper {
     fun mapModelToEntity(model: Track, imageFilePath: String?): TrackEntity {
         return TrackEntity(
+            id = model.id?:System.currentTimeMillis(),
             name = model.name,
             date = model.date.toEpochMilli(),
             duration = model.duration.inWholeMilliseconds,
@@ -42,7 +39,7 @@ object TrackMapper {
 
     fun mapDtoToModel(dto: TrackDto): Track {
         return Track(
-            id = dto.id,
+            id = dto.localId,
             name = dto.name,
             date = Instant.parse(dto.date),
             duration = dto.duration.toDuration(DurationUnit.MILLISECONDS),
@@ -56,6 +53,7 @@ object TrackMapper {
 
     fun mapModelToDto(model: Track, username: String): TrackDto {
         return TrackDto(
+            localId = model.id,
             name = model.name,
             date = model.date.toString(),
             duration = model.duration.inWholeMilliseconds,
@@ -63,7 +61,6 @@ object TrackMapper {
             averageSpeed = model.averageSpeed,
             gpxData = model.gpxData,
             imageBase64 = model.image?.let { ImageSerializer.bitmapToBase64(it) },
-            username = username
         )
     }
 }
