@@ -39,4 +39,14 @@ class AuthInteractorImpl(private val authRepository: AuthRepository, private val
         tokenStorage.clearToken()
     }
 
+    override suspend fun checkToken(): Boolean {
+        return try {
+            val resource = authRepository.checkToken()
+            resource.resultType == ResultType.SUCCESS
+        } catch (e: Exception) {
+            false
+        }
+
+    }
+
 }

@@ -1,4 +1,5 @@
 package com.example.geotrack.data.network.dto
+import retrofit2.Response
 import retrofit2.http.*
 
 interface ApiService {
@@ -16,4 +17,8 @@ interface ApiService {
         @Header("Authorization") token: String,
         @Body track: TrackDto
     )
+    @GET("tokencheck")
+    suspend fun checkToken(
+        @Header("Authorization") token: String
+    ): Response<Unit>
 }

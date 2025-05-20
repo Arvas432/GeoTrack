@@ -8,4 +8,5 @@ interface AuthInteractor {
     suspend fun register(userCredentials: UserCredentials): Result<ResultType>
     fun getToken(): String?
     fun clearToken()
+    suspend fun checkToken(): Boolean
 }

@@ -5,12 +5,17 @@ import com.example.geotrack.data.network.RegisterRequest
 import com.example.geotrack.data.network.RetrofitNetworkClient
 import com.example.geotrack.data.network.dto.AuthResponse
 import com.example.geotrack.data.network.dto.LoginRequest
+import com.example.geotrack.data.network.dto.TokenCheckRequest
 import com.example.geotrack.data.network.dto.UserCredentials
 import com.example.geotrack.domain.auth.AuthRepository
+import com.example.geotrack.domain.auth.TokenStorage
 import com.example.geotrack.domain.auth.model.AuthResource
 import com.example.geotrack.domain.auth.model.ResultType
 
-class AuthRepositoryImpl(private val networkClient: NetworkClient) : AuthRepository {
+class AuthRepositoryImpl(
+    private val networkClient: NetworkClient,
+    private val tokenStorage: TokenStorage
+) : AuthRepository {
     override suspend fun login(userCredentials: UserCredentials): AuthResource {
         val response = networkClient.doRequest(
             LoginRequest(
@@ -45,4 +50,13 @@ class AuthRepositoryImpl(private val networkClient: NetworkClient) : AuthReposit
             }
         }
     }
+
+    override suspend fun checkToken(): AuthResource {
+        val response = tokenStorage.getToken()
+            ?.let { TokenCheckRequest(it) }?.let { networkClient.doRequest(it) }
+        return if (response != null) {
+            AuthResource(resultType = if (response.resultCode == RetrofitNetworkClient.SUCCESS) ResultType.SUCCESS else ResultType.SERVER_ERROR)
+        } else AuthResource(resultType = ResultType.SERVER_ERROR)
+    }
+
 }

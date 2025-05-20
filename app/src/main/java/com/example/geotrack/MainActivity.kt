@@ -7,14 +7,21 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.lifecycle.lifecycleScope
@@ -90,22 +97,54 @@ class MainActivity : ComponentActivity() {
         val showAuth = tokenStorage.getToken() == null
         setContent {
             GeoTrackTheme {
-                MyApp(showAuth)
+                AppRoot(tokenStorage, authInteractor, userProfileInteractor)
             }
         }
     }
 }
 
 @Composable
-fun MyApp(showAuth: Boolean) {
+fun AppRoot(
+    tokenStorage: TokenStorage,
+    authInteractor: AuthInteractor,
+    userProfileInteractor: UserProfileInteractor
+) {
+    val navController = rememberNavController()
+    val startDestination = remember { mutableStateOf<String?>(null) }
+
+    LaunchedEffect(Unit) {
+        val token = tokenStorage.getToken()
+        val isTokenValid = token?.let {
+            runCatching { authInteractor.checkToken() }.getOrDefault(false)
+        } ?: false
+
+        if (!isTokenValid) {
+            startDestination.value = "auth_route"
+        } else {
+            val user = userProfileInteractor.getProfile()
+            startDestination.value =
+                if (user == null) "profile_creation_route" else "tracking_route"
+        }
+    }
+
+    if (startDestination.value == null) {
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            CircularProgressIndicator()
+        }
+    } else {
+        MyApp(startDestination.value!!, navController)
+    }
+}
+
+@Composable
+fun MyApp(startDestination: String, navController: NavHostController) {
     val bottomBarHiddenRoutes = listOf(
         "auth_route",
         "profile_creation_route"
     )
-
-    val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
+
     Scaffold(
         modifier = Modifier.background(MaterialTheme.colors.primary),
         bottomBar = {
@@ -115,9 +154,7 @@ fun MyApp(showAuth: Boolean) {
         }
     ) { innerPadding ->
         NavHostContainer(
-            navController,
-            showAuth,
-            Modifier
+            navController, startDestination, Modifier
                 .padding(innerPadding)
                 .background(MaterialTheme.colors.primary)
         )
@@ -125,8 +162,12 @@ fun MyApp(showAuth: Boolean) {
 }
 
 @Composable
-fun NavHostContainer(navController: NavHostController, showAuth: Boolean, modifier: Modifier) {
-    NavHost(navController, startDestination = if (showAuth) "auth_route" else "tracking_route", modifier = modifier) {
+fun NavHostContainer(
+    navController: NavHostController,
+    startDestination: String,
+    modifier: Modifier
+) {
+    NavHost(navController, startDestination = startDestination, modifier = modifier) {
         composable("auth_route") { LoginScreen(navController = navController) }
         composable("settings_route") { SettingsScreen() }
         composable("tracking_route") { TrackingScreen() }

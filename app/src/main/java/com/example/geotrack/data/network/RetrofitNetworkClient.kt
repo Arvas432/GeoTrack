@@ -6,6 +6,7 @@ import android.util.Log
 import com.example.geotrack.data.network.dto.ApiService
 import com.example.geotrack.data.network.dto.LoginRequest
 import com.example.geotrack.data.network.dto.Response
+import com.example.geotrack.data.network.dto.TokenCheckRequest
 import com.example.geotrack.data.network.dto.TracksRequest
 import com.example.geotrack.data.network.dto.TracksResponse
 import com.example.geotrack.data.network.dto.UploadTrackRequest
@@ -22,6 +23,7 @@ class RetrofitNetworkClient(private val apiService: ApiService, private val conn
             is LoginRequest -> handleLoginRequest(dto)
             is TracksRequest -> handleTracksRequest(dto)
             is UploadTrackRequest -> handleTrackUploadRequest(dto)
+            is TokenCheckRequest -> handleTokenCheckRequest(dto)
             else -> {
                 Response(INTERNAL_ERROR)
             }
@@ -67,6 +69,20 @@ class RetrofitNetworkClient(private val apiService: ApiService, private val conn
                 apiService.uploadTrack(request.token, TrackMapper.mapModelToDto(request.track, "ЗАГЛУШКА ФУЛ ПОНОС!!!"))
                 Log.i("Загружено", "ага")
                 Response(SUCCESS)
+            } catch (e: Throwable) {
+                Response(ERROR)
+            }
+        }
+    }
+    private suspend fun handleTokenCheckRequest(request: TokenCheckRequest): Response {
+        return withContext(Dispatchers.IO) {
+            try {
+                val response = apiService.checkToken(request.token)
+                if (response.isSuccessful) {
+                    Response(SUCCESS)
+                } else {
+                    Response(ERROR)
+                }
             } catch (e: Throwable) {
                 Response(ERROR)
             }
