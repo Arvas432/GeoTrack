@@ -3,6 +3,7 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     kotlin("kapt")
+    id("org.jetbrains.kotlin.plugin.serialization") version "2.1.21"
 }
 tasks.register("testClasses")
 android {
@@ -61,6 +62,14 @@ dependencies {
     implementation("androidx.compose.runtime:runtime:1.8.1")
     implementation("androidx.exifinterface:exifinterface:1.4.1")
     implementation("io.coil-kt:coil-compose:2.5.0")
+
+    implementation(libs.retrofit)
+    implementation(libs.kotlinx.serialization.json)
+    implementation(libs.androidx.lifecycle.viewmodel.ktx)
+    implementation(libs.gson)
+    implementation(libs.converter.gson)
+    implementation(libs.logging.interceptor)
+
 
     implementation(libs.androidx.material3)
     implementation(libs.androidx.compose.material)
