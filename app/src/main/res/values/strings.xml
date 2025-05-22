@@ -34,4 +34,5 @@
     <string name="loading_">Загрузка...</string>
     <string name="already_have_an_account">Уже есть аккаунт?</string>
     <string name="registration">Регистрация</string>
+    <string name="Error">Ошибка</string>
 </resources>

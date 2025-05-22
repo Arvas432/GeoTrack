@@ -1,4 +1,5 @@
 package com.example.geotrack.data.network.dto
+import okhttp3.ResponseBody
 import retrofit2.Response
 import retrofit2.http.*
 
@@ -15,8 +16,26 @@ interface ApiService {
     @POST("tracks")
     suspend fun uploadTrack(
         @Header("Authorization") token: String,
-        @Body track: TrackDto
+        @Body track: UploadTrackDto
     )
+    @DELETE("tracks/{id}")
+    suspend fun deleteTrack(
+        @Header("Authorization") token: String,
+        @Path("id") id: Long
+    )
+
+    @GET("public-tracks")
+    suspend fun getPublicTracks(): List<PostDto>
+
+    @POST("public-tracks/{id}/like")
+    suspend fun likeTrack(@Path("id") id: Long): ResponseBody
+
+    @POST("public-tracks/{id}/unlike")
+    suspend fun unlikeTrack(@Path("id") id: Long): ResponseBody
+
+    @POST("make-public/{id}")
+    suspend fun makeTrackPublic(@Path("id") id: Long): ResponseBody
+
     @GET("tokencheck")
     suspend fun checkToken(
         @Header("Authorization") token: String

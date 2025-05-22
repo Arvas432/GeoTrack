@@ -2,7 +2,10 @@ package com.example.geotrack.util
 
 import com.example.geotrack.domain.routeTracking.model.GpxPoint
 import org.osmdroid.util.GeoPoint
+import org.w3c.dom.Document
+import java.io.ByteArrayInputStream
 import java.time.Instant
+import javax.xml.parsers.DocumentBuilderFactory
 
 class GpxConverter {
     fun calculateTotalDistance(points: List<GeoPoint>): Double {
@@ -34,5 +37,28 @@ class GpxConverter {
                     </trkseg>
                 </trk>
             </gpx>""".trimIndent()
+    }
+    fun parseGpxToGeoPoints(gpx: String): List<GeoPoint> {
+        val geoPoints = mutableListOf<GeoPoint>()
+        val inputStream = ByteArrayInputStream(gpx.toByteArray(Charsets.UTF_8))
+
+        val factory = DocumentBuilderFactory.newInstance()
+        val builder = factory.newDocumentBuilder()
+        val doc: Document = builder.parse(inputStream)
+        doc.documentElement.normalize()
+
+        val trkptNodes = doc.getElementsByTagName("trkpt")
+
+        for (i in 0 until trkptNodes.length) {
+            val node = trkptNodes.item(i)
+            val lat = node.attributes.getNamedItem("lat")?.nodeValue?.toDoubleOrNull()
+            val lon = node.attributes.getNamedItem("lon")?.nodeValue?.toDoubleOrNull()
+
+            if (lat != null && lon != null) {
+                geoPoints.add(GeoPoint(lat, lon))
+            }
+        }
+
+        return geoPoints
     }
 }

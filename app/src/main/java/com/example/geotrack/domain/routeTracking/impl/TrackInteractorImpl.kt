@@ -37,7 +37,7 @@ class TrackInteractorImpl(
         val gpxData = geoConverter.convertToGpx(gpxPoints, "Track")
 
         val track = Track(
-            id = System.currentTimeMillis(),
+            localDbId = System.currentTimeMillis(),
             name = name,
             date = Instant.ofEpochMilli(startTime),
             duration = duration.toDuration(unit = DurationUnit.MILLISECONDS),

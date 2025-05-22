@@ -13,7 +13,6 @@ import com.example.geotrack.domain.auth.TokenStorage
 import com.example.geotrack.domain.routeTracking.TrackRepository
 import com.example.geotrack.domain.routeTracking.model.Track
 import com.example.geotrack.util.TrackMapper
-import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
@@ -32,8 +31,8 @@ class TrackRepositoryImpl(
                 storageHandler.createImageFile(track.image, track.name + System.currentTimeMillis())
         }
         trackDao.insert(TrackMapper.mapModelToEntity(track, imagePath))
-        Log.i("ID",track.id.toString())
-        val savedTrackEntity = trackDao.getTrackById(track.id)
+        Log.i("ID",track.localDbId.toString())
+        val savedTrackEntity = trackDao.getTrackById(track.localDbId)
         Log.i("SAVED TRACK ENTITY", savedTrackEntity.toString())
 
         val savedTrackModel = savedTrackEntity?.let { TrackMapper.mapEntityToModel(it, track.image) }
@@ -60,13 +59,18 @@ class TrackRepositoryImpl(
             val response = networkClient.doRequest(TracksRequest(token))
             if (response.resultCode == RetrofitNetworkClient.SUCCESS && response is TracksResponse) {
                 val remoteTracks = response.tracks
-                val localTrackIds = localTracks.map { it.id }.toSet()
-                val remoteTrackIds = remoteTracks.map { it.id }.toSet()
-                val missingInLocal = remoteTracks.filterNot { it.id in localTrackIds }
+                val localTrackIds = localTracks.map { it.localDbId }.toSet()
+                val remoteTrackIds = remoteTracks.map { it.localDbId }.toSet()
+                val missingInLocal = remoteTracks.filterNot { it.localDbId in localTrackIds }
 
-                val missingInRemote = localTracks.filterNot { it.id in remoteTrackIds }
+                val missingInRemote = localTracks.filterNot { it.localDbId in remoteTrackIds }
                 missingInLocal.forEach { track ->
-                    trackDao.insert(TrackMapper.mapModelToEntity(track, null))
+                    var imagePath: String? = null
+                    if (track.image != null) {
+                        imagePath =
+                            storageHandler.createImageFile(track.image, track.name + System.currentTimeMillis())
+                    }
+                    trackDao.insert(TrackMapper.mapModelToEntity(track, imagePath))
                 }
 
                 missingInRemote.forEach { track ->

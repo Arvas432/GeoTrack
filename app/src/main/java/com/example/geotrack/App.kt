@@ -5,6 +5,7 @@ import com.example.geotrack.di.authModule
 import com.example.geotrack.di.locationModule
 import com.example.geotrack.di.networkModule
 import com.example.geotrack.di.profileModule
+import com.example.geotrack.di.socialModule
 import com.example.geotrack.di.storageModule
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.context.startKoin
@@ -18,7 +19,7 @@ class App: Application() {
         super.onCreate()
         startKoin {
             androidContext(this@App)
-            modules(locationModule, storageModule, profileModule, authModule, networkModule)
+            modules(locationModule, storageModule, profileModule, authModule, networkModule, socialModule)
         }
         val osmConf = Configuration.getInstance()
         val basePath = File(cacheDir.absolutePath, "osmdroid")

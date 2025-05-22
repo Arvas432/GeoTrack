@@ -4,13 +4,20 @@ import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.util.Log
 import com.example.geotrack.data.network.dto.ApiService
+import com.example.geotrack.data.network.dto.LikeTrackRequest
 import com.example.geotrack.data.network.dto.LoginRequest
+import com.example.geotrack.data.network.dto.MakeTrackPublicRequest
+import com.example.geotrack.data.network.dto.PublicTracksRequest
+import com.example.geotrack.data.network.dto.PublicTracksResponse
 import com.example.geotrack.data.network.dto.Response
 import com.example.geotrack.data.network.dto.TokenCheckRequest
 import com.example.geotrack.data.network.dto.TracksRequest
 import com.example.geotrack.data.network.dto.TracksResponse
+import com.example.geotrack.data.network.dto.UnlikeTrackRequest
+import com.example.geotrack.data.network.dto.UploadTrackDto
 import com.example.geotrack.data.network.dto.UploadTrackRequest
 import com.example.geotrack.data.network.dto.UserCredentials
+import com.example.geotrack.util.ImageSerializer
 import com.example.geotrack.util.TrackMapper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -24,6 +31,9 @@ class RetrofitNetworkClient(private val apiService: ApiService, private val conn
             is TracksRequest -> handleTracksRequest(dto)
             is UploadTrackRequest -> handleTrackUploadRequest(dto)
             is TokenCheckRequest -> handleTokenCheckRequest(dto)
+            is PublicTracksRequest -> handleGetPublicTracks()
+            is LikeTrackRequest -> handleLikeTrack(dto)
+            is UnlikeTrackRequest -> handleUnlikeTrack(dto)
             else -> {
                 Response(INTERNAL_ERROR)
             }
@@ -66,9 +76,19 @@ class RetrofitNetworkClient(private val apiService: ApiService, private val conn
     private suspend fun handleTrackUploadRequest(request: UploadTrackRequest): Response {
         return withContext(Dispatchers.IO) {
             try {
-                apiService.uploadTrack(request.token, TrackMapper.mapModelToDto(request.track, "ЗАГЛУШКА ФУЛ ПОНОС!!!"))
-                Log.i("Загружено", "ага")
-                Response(SUCCESS)
+                val upload = UploadTrackDto(
+                    localId = request.track.localDbId,
+                    name = request.track.name,
+                    date = request.track.date.toString(),
+                    duration = request.track.duration.inWholeMilliseconds,
+                    averageSpeed = request.track.averageSpeed,
+                    distance = request.track.distance,
+                    gpxData = request.track.gpxData,
+                    imageBase64 = request.track.image?.let { ImageSerializer.bitmapToBase64(it) }
+                )
+                    apiService.uploadTrack(request.token, upload)
+                    Log.i("Загружено", "ага")
+                    Response(SUCCESS)
             } catch (e: Throwable) {
                 Response(ERROR)
             }
@@ -83,6 +103,53 @@ class RetrofitNetworkClient(private val apiService: ApiService, private val conn
                 } else {
                     Response(ERROR)
                 }
+            } catch (e: Throwable) {
+                Response(ERROR)
+            }
+        }
+    }
+
+    private suspend fun handleGetPublicTracks(): Response {
+        return withContext(Dispatchers.IO) {
+            try {
+                val response = apiService.getPublicTracks()
+                Log.i("Public response", response.toString())
+                val result = PublicTracksResponse(response.map { TrackMapper.mapPostDtoToModel(it) }).apply { resultCode = SUCCESS }
+                Log.i("resultCode", result.resultCode.toString())
+                result
+            } catch (e: Throwable) {
+                Response(ERROR)
+            }
+        }
+    }
+
+    private suspend fun handleLikeTrack(request: LikeTrackRequest): Response {
+        return withContext(Dispatchers.IO) {
+            try {
+                apiService.likeTrack(request.trackId)
+                Response(SUCCESS)
+            } catch (e: Throwable) {
+                Response(ERROR)
+            }
+        }
+    }
+
+    private suspend fun handleUnlikeTrack(request: UnlikeTrackRequest): Response {
+        return withContext(Dispatchers.IO) {
+            try {
+                apiService.unlikeTrack(request.trackId)
+                Response(SUCCESS)
+            } catch (e: Throwable) {
+                Response(ERROR)
+            }
+        }
+    }
+
+    private suspend fun handleMakeTrackPublic(request: MakeTrackPublicRequest): Response {
+        return withContext(Dispatchers.IO) {
+            try {
+                apiService.makeTrackPublic(request.trackId)
+                Response(SUCCESS)
             } catch (e: Throwable) {
                 Response(ERROR)
             }

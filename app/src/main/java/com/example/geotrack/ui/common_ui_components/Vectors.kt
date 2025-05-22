@@ -349,6 +349,69 @@ val LikeIcon: ImageVector
 @Suppress("ObjectPropertyName")
 private var _LikeIcon: ImageVector? = null
 
+val LikedIcon: ImageVector
+    get() {
+        if (_LikedIcon != null) {
+            return _LikedIcon!!
+        }
+        _LikedIcon = ImageVector.Builder(
+            name = "LikeIcon",
+            defaultWidth = 20.dp,
+            defaultHeight = 19.dp,
+            viewportWidth = 20f,
+            viewportHeight = 19f
+        ).apply {
+            path(fill = SolidColor(Color(0xFFFF0000))) {
+                moveTo(10f, 19f)
+                lineTo(8.55f, 17.7f)
+                curveTo(6.867f, 16.183f, 5.475f, 14.875f, 4.375f, 13.775f)
+                curveTo(3.275f, 12.675f, 2.4f, 11.692f, 1.75f, 10.825f)
+                curveTo(1.1f, 9.942f, 0.642f, 9.133f, 0.375f, 8.4f)
+                curveTo(0.125f, 7.667f, 0f, 6.917f, 0f, 6.15f)
+                curveTo(0f, 4.583f, 0.525f, 3.275f, 1.575f, 2.225f)
+                curveTo(2.625f, 1.175f, 3.933f, 0.65f, 5.5f, 0.65f)
+                curveTo(6.367f, 0.65f, 7.192f, 0.833f, 7.975f, 1.2f)
+                curveTo(8.758f, 1.567f, 9.433f, 2.083f, 10f, 2.75f)
+                curveTo(10.567f, 2.083f, 11.242f, 1.567f, 12.025f, 1.2f)
+                curveTo(12.808f, 0.833f, 13.633f, 0.65f, 14.5f, 0.65f)
+                curveTo(16.067f, 0.65f, 17.375f, 1.175f, 18.425f, 2.225f)
+                curveTo(19.475f, 3.275f, 20f, 4.583f, 20f, 6.15f)
+                curveTo(20f, 6.917f, 19.867f, 7.667f, 19.6f, 8.4f)
+                curveTo(19.35f, 9.133f, 18.9f, 9.942f, 18.25f, 10.825f)
+                curveTo(17.6f, 11.692f, 16.725f, 12.675f, 15.625f, 13.775f)
+                curveTo(14.525f, 14.875f, 13.133f, 16.183f, 11.45f, 17.7f)
+                lineTo(10f, 19f)
+                close()
+                moveTo(10f, 16.3f)
+                curveTo(11.6f, 14.867f, 12.917f, 13.642f, 13.95f, 12.625f)
+                curveTo(14.983f, 11.592f, 15.8f, 10.7f, 16.4f, 9.95f)
+                curveTo(17f, 9.183f, 17.417f, 8.508f, 17.65f, 7.925f)
+                curveTo(17.883f, 7.325f, 18f, 6.733f, 18f, 6.15f)
+                curveTo(18f, 5.15f, 17.667f, 4.317f, 17f, 3.65f)
+                curveTo(16.333f, 2.983f, 15.5f, 2.65f, 14.5f, 2.65f)
+                curveTo(13.717f, 2.65f, 12.992f, 2.875f, 12.325f, 3.325f)
+                curveTo(11.658f, 3.758f, 11.2f, 4.317f, 10.95f, 5f)
+                horizontalLineTo(9.05f)
+                curveTo(8.8f, 4.317f, 8.342f, 3.758f, 7.675f, 3.325f)
+                curveTo(7.008f, 2.875f, 6.283f, 2.65f, 5.5f, 2.65f)
+                curveTo(4.5f, 2.65f, 3.667f, 2.983f, 3f, 3.65f)
+                curveTo(2.333f, 4.317f, 2f, 5.15f, 2f, 6.15f)
+                curveTo(2f, 6.733f, 2.117f, 7.325f, 2.35f, 7.925f)
+                curveTo(2.583f, 8.508f, 3f, 9.183f, 3.6f, 9.95f)
+                curveTo(4.2f, 10.7f, 5.017f, 11.592f, 6.05f, 12.625f)
+                curveTo(7.083f, 13.642f, 8.4f, 14.867f, 10f, 16.3f)
+                close()
+            }
+        }.build()
+
+        return _LikedIcon!!
+    }
+
+@Suppress("ObjectPropertyName")
+private var _LikedIcon: ImageVector? = null
+
+
+
 val Pause: ImageVector
     get() {
         if (_Pause != null) {

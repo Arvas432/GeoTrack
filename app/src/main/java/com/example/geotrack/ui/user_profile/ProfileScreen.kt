@@ -26,10 +26,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -43,10 +39,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.constraintlayout.compose.ConstraintLayout
-import coil.compose.AsyncImage
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
-import com.bumptech.glide.integration.compose.GlideImage
-import com.bumptech.glide.integration.compose.placeholder
 import com.example.geotrack.R
 import com.example.geotrack.domain.routeTracking.model.Track
 import com.example.geotrack.ui.robotoFamily
@@ -184,7 +177,7 @@ private fun TrackList(
     LazyColumn(modifier = modifier) {
         items(
             items = tracks,
-            key = { track -> track.id!! }
+            key = { track -> track.localDbId!! }
         ) { track ->
             RouteListItem(track, onTrackClick, onDeleteTrack)
         }
@@ -201,8 +194,8 @@ fun RouteListItem(
     ConstraintLayout(modifier = Modifier
         .height(150.dp)
         .clickable {
-            if (route.id != null) {
-                onTrackClick(route.id)
+            if (route.localDbId != null) {
+                onTrackClick(route.localDbId)
             }
         }) {
         val (routeTitle,

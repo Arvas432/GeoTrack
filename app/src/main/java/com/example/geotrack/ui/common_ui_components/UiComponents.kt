@@ -105,7 +105,7 @@ fun ScreenHeader(headerText: String, modifier: Modifier = Modifier) {
         fontWeight = FontWeight.Bold,
         color = MaterialTheme.colorScheme.onPrimary,
         fontSize = 22.sp,
-        modifier = modifier.padding(vertical = 19.dp)
+        modifier = modifier.padding(vertical = 19.dp).background(MaterialTheme.colorScheme.primary)
     )
 }
 
