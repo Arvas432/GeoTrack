@@ -1,8 +1,6 @@
-package com.example.geotrack.domain.public_tracks
+package com.example.geotrack.domain.social
 
 import android.graphics.Bitmap
-import com.example.geotrack.domain.Route
-import com.example.geotrack.domain.User
 import java.time.Instant
 import kotlin.time.Duration
 

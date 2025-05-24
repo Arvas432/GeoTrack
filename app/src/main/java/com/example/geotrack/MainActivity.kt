@@ -7,6 +7,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.background
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -30,7 +31,6 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import androidx.wear.compose.material.MaterialTheme
 import com.example.geotrack.domain.auth.AuthInteractor
 import com.example.geotrack.domain.auth.AuthRepository
 import com.example.geotrack.domain.auth.TokenStorage
@@ -146,7 +146,7 @@ fun MyApp(startDestination: String, navController: NavHostController) {
     val currentRoute = navBackStackEntry?.destination?.route
 
     Scaffold(
-        modifier = Modifier.background(MaterialTheme.colors.primary),
+        contentColor = MaterialTheme.colorScheme.primary,
         bottomBar = {
             if (currentRoute !in bottomBarHiddenRoutes) {
                 BottomNavigationBar(navController)
@@ -156,7 +156,7 @@ fun MyApp(startDestination: String, navController: NavHostController) {
         NavHostContainer(
             navController, startDestination, Modifier
                 .padding(innerPadding)
-                .background(MaterialTheme.colors.primary)
+                .background(MaterialTheme.colorScheme.primary)
         )
     }
 }

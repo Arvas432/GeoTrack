@@ -3,7 +3,6 @@ package com.example.geotrack.data.profile
 import android.graphics.Bitmap
 import com.example.geotrack.data.db.UserProfileDao
 import com.example.geotrack.data.local.LocalImageStorageHandler
-import com.example.geotrack.domain.User
 import com.example.geotrack.domain.profile.UserProfileRepository
 import com.example.geotrack.domain.profile.model.UserProfile
 import com.example.geotrack.util.UserProfileMapper

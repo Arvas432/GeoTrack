@@ -3,7 +3,7 @@ package com.example.geotrack.ui.social.viewmodel
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.geotrack.domain.public_tracks.Post
+import com.example.geotrack.domain.social.Post
 import com.example.geotrack.domain.social.PostsInteractor
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

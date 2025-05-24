@@ -22,7 +22,10 @@ import com.example.geotrack.util.TrackMapper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-class RetrofitNetworkClient(private val apiService: ApiService, private val connectivityManager: ConnectivityManager) : NetworkClient {
+class RetrofitNetworkClient(
+    private val apiService: ApiService,
+    private val connectivityManager: ConnectivityManager
+) : NetworkClient {
     override suspend fun doRequest(dto: Any): Response {
         if (!isConnected()) return Response(NO_CONNECTION)
         val response = when (dto) {
@@ -67,12 +70,15 @@ class RetrofitNetworkClient(private val apiService: ApiService, private val conn
         return withContext(Dispatchers.IO) {
             try {
                 val tracks = apiService.getTracks(request.token)
-                TracksResponse(tracks.map { TrackMapper.mapDtoToModel(it) }).apply { resultCode = SUCCESS }
+                TracksResponse(tracks.map { TrackMapper.mapDtoToModel(it) }).apply {
+                    resultCode = SUCCESS
+                }
             } catch (e: Throwable) {
                 Response(ERROR)
             }
         }
     }
+
     private suspend fun handleTrackUploadRequest(request: UploadTrackRequest): Response {
         return withContext(Dispatchers.IO) {
             try {
@@ -86,14 +92,15 @@ class RetrofitNetworkClient(private val apiService: ApiService, private val conn
                     gpxData = request.track.gpxData,
                     imageBase64 = request.track.image?.let { ImageSerializer.bitmapToBase64(it) }
                 )
-                    apiService.uploadTrack(request.token, upload)
-                    Log.i("Загружено", "ага")
-                    Response(SUCCESS)
+                apiService.uploadTrack(request.token, upload)
+                Log.i("Загружено", "ага")
+                Response(SUCCESS)
             } catch (e: Throwable) {
                 Response(ERROR)
             }
         }
     }
+
     private suspend fun handleTokenCheckRequest(request: TokenCheckRequest): Response {
         return withContext(Dispatchers.IO) {
             try {
@@ -114,7 +121,10 @@ class RetrofitNetworkClient(private val apiService: ApiService, private val conn
             try {
                 val response = apiService.getPublicTracks()
                 Log.i("Public response", response.toString())
-                val result = PublicTracksResponse(response.map { TrackMapper.mapPostDtoToModel(it) }).apply { resultCode = SUCCESS }
+                val result =
+                    PublicTracksResponse(response.map { TrackMapper.mapPostDtoToModel(it) }).apply {
+                        resultCode = SUCCESS
+                    }
                 Log.i("resultCode", result.resultCode.toString())
                 result
             } catch (e: Throwable) {
@@ -155,13 +165,16 @@ class RetrofitNetworkClient(private val apiService: ApiService, private val conn
             }
         }
     }
+
     private fun isConnected(): Boolean {
-        val capabilities = connectivityManager.getNetworkCapabilities(connectivityManager.activeNetwork)
+        val capabilities =
+            connectivityManager.getNetworkCapabilities(connectivityManager.activeNetwork)
         return capabilities?.run {
             hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) || hasTransport(NetworkCapabilities.TRANSPORT_WIFI)
                     || hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET)
         } ?: false
     }
+
     companion object {
         const val SUCCESS = 200
         const val ERROR = 400

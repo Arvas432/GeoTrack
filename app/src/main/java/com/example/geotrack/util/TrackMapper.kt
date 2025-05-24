@@ -4,7 +4,7 @@ import android.graphics.Bitmap
 import com.example.geotrack.data.db.TrackEntity
 import com.example.geotrack.data.network.dto.PostDto
 import com.example.geotrack.data.network.dto.TrackDto
-import com.example.geotrack.domain.public_tracks.Post
+import com.example.geotrack.domain.social.Post
 import com.example.geotrack.domain.routeTracking.model.Track
 import java.time.Instant
 import kotlin.time.DurationUnit

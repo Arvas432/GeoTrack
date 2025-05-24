@@ -1,6 +1,6 @@
 package com.example.geotrack.ui.social.viewmodel
 
-import com.example.geotrack.domain.public_tracks.Post
+import com.example.geotrack.domain.social.Post
 
 sealed class RoutesIntent {
     object LoadPosts : RoutesIntent()

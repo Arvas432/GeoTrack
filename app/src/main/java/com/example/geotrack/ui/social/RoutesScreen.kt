@@ -14,25 +14,22 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.painter.BitmapPainter
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -42,16 +39,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.constraintlayout.compose.ConstraintLayout
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
-import com.bumptech.glide.integration.compose.GlideImage
-import com.bumptech.glide.integration.compose.placeholder
 import com.example.geotrack.R
-import com.example.geotrack.domain.public_tracks.Post
-import com.example.geotrack.domain.Route
-import com.example.geotrack.domain.User
+import com.example.geotrack.domain.social.Post
 import com.example.geotrack.ui.common_ui_components.HintedLabellessTextField
-import com.example.geotrack.ui.common_ui_components.LikeIcon
 import com.example.geotrack.ui.common_ui_components.LikedIcon
 import com.example.geotrack.ui.common_ui_components.ScreenHeader
 import com.example.geotrack.ui.common_ui_components.ValueWithHeader
@@ -98,7 +88,7 @@ fun RoutesScreen(viewModel: RoutesViewModel = koinViewModel()) {
                         modifier = Modifier.padding(start = 17.dp, end = 15.dp)
                     )
                     LazyColumn(
-                        modifier = Modifier.fillMaxSize()
+                        modifier = Modifier.fillMaxSize().padding(top = 10.dp)
                     ) {
                         items(posts, key = { it.serverId!! }) { post ->
                             PostListItem(post, onLikePost = {
@@ -120,8 +110,7 @@ fun RoutesScreen(viewModel: RoutesViewModel = koinViewModel()) {
 fun PostListItem(post: Post, onLikePost: () -> Unit) {
     ConstraintLayout(
         modifier = Modifier
-            .height(350.dp)
-            .padding(horizontal = 10.dp)
+            .padding(horizontal = 10.dp, vertical = 5.dp)
     ) {
         val (routeTitle,
             profilePicture,
@@ -169,11 +158,12 @@ fun PostListItem(post: Post, onLikePost: () -> Unit) {
                 contentDescription = "Route image",
                 modifier = Modifier
                     .constrainAs(postImage) {
-                        top.linkTo(parent.top, margin = 14.dp)
-                        end.linkTo(parent.end, margin = 16.dp)
+                        top.linkTo(postDate.bottom, margin = 14.dp)
+                        start.linkTo(parent.start, margin = 14.dp)
+                        end.linkTo(parent.end, margin = 14.dp)
+                        bottom.linkTo(postParameters.top, margin = 4.dp)
                     }
-                    .height(64.dp)
-                    .width(64.dp)
+                    .fillMaxWidth()
                     .clip(RoundedCornerShape(12.dp))
             )
         } else {
@@ -197,7 +187,7 @@ fun PostListItem(post: Post, onLikePost: () -> Unit) {
                     bottom.linkTo(parent.bottom)
                 }) {
             ValueWithHeader(stringResource(R.string.avg_speed), buildString {
-                append(post.averageSpeed.toString())
+                append((Math.round(post.averageSpeed * 10.0) / 10.0).toString())
                 append(
                     stringResource(
                         R.string.kmh
@@ -205,7 +195,7 @@ fun PostListItem(post: Post, onLikePost: () -> Unit) {
                 )
             }, Modifier.weight(1F))
             ValueWithHeader(stringResource(R.string.distance), buildString {
-                append(post.distance.toString())
+                append((Math.round(post.distance * 10.0) / 10.0).toString())
                 append(
                     stringResource(
                         R.string.km
@@ -255,4 +245,5 @@ fun PostListItem(post: Post, onLikePost: () -> Unit) {
             }
         }
     }
+    HorizontalDivider(color = MaterialTheme.colorScheme.tertiary, thickness = 1.dp)
 }

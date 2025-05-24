@@ -7,9 +7,8 @@ import com.example.geotrack.data.network.dto.LikeTrackRequest
 import com.example.geotrack.data.network.dto.PublicTracksRequest
 import com.example.geotrack.data.network.dto.PublicTracksResponse
 import com.example.geotrack.data.network.dto.UnlikeTrackRequest
-import com.example.geotrack.domain.public_tracks.Post
+import com.example.geotrack.domain.social.Post
 import com.example.geotrack.domain.social.PostsRepository
-import com.example.geotrack.util.TrackMapper
 
 class PostsRepositoryImpl(private val networkClient: NetworkClient) : PostsRepository {
     override suspend fun getPublicPosts(): List<Post> {
