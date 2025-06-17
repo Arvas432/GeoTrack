@@ -35,7 +35,6 @@ class RoutesViewModel(
             val result = interactor.loadPosts()
             when {
                 result.isNotEmpty() -> {
-                    Log.i("result", result.toString())
                     _state.value = RoutesState.Loaded(result)
                     result.map { post ->  if (posts.find { it.serverId == post.serverId} == null) posts.add(post) }
                 }

@@ -35,6 +35,8 @@ playServicesMaps = "19.2.0"
 retrofit = "2.9.0"
 roomRuntime = "2.7.1"
 securityCrypto = "1.1.0-alpha07"
+junitKtx = "1.2.1"
+testng = "6.9.6"
 
 [libraries]
 androidx-activity-compose-v1101 = { module = "androidx.activity:activity-compose", version.ref = "activityComposeVersion" }
@@ -81,6 +83,8 @@ osmdroid-wms-v616 = { module = "org.osmdroid:osmdroid-wms", version.ref = "osmdr
 play-services-location = { module = "com.google.android.gms:play-services-location", version.ref = "playServicesLocation" }
 play-services-maps = { group = "com.google.android.gms", name = "play-services-maps", version.ref = "playServicesMaps" }
 retrofit = { module = "com.squareup.retrofit2:retrofit", version.ref = "retrofit" }
+androidx-junit-ktx = { group = "androidx.test.ext", name = "junit-ktx", version.ref = "junitKtx" }
+testng = { group = "org.testng", name = "testng", version.ref = "testng" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

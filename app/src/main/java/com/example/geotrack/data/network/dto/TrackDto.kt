@@ -12,6 +12,6 @@ data class TrackDto(
     val distance: Double,
     val averageSpeed: Double,
     val gpxData: String? = null,
-    val imageBase64: String? = null,
+    val image_base64: String? = null,
     val likes: Int? = null
 )

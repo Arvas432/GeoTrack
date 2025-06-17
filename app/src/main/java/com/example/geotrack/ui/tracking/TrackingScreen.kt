@@ -96,7 +96,6 @@ fun TrackingScreen(viewModel: TrackingViewModel = koinViewModel()) {
         ActivityResultContracts.RequestPermission()
     ) { isGranted ->
         hasLocationPermission = isGranted
-       // if (isGranted) viewModel.processIntent(TrackingIntent.StartTracking)
     }
     LaunchedEffect(Unit) {
         hasLocationPermission = ContextCompat.checkSelfPermission(

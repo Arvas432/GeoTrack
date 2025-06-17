@@ -85,6 +85,9 @@ dependencies {
     implementation(libs.osmdroid.geopackage.v616)
 
     implementation(libs.androidx.room.runtime)
+    implementation(libs.androidx.junit.ktx)
+    testImplementation(libs.testng)
+    testImplementation(libs.testng)
     kapt(libs.androidx.room.compiler)
     implementation(libs.androidx.room.ktx)
 
@@ -97,4 +100,15 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
+    testImplementation("io.mockk:mockk:1.13.5")
+
+    androidTestImplementation("androidx.arch.core:core-testing:2.1.0")
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3")
+    androidTestImplementation("androidx.test.ext:junit:1.1.5")
+    androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
+    testImplementation("org.slf4j:slf4j-simple:2.0.13")
+    testImplementation("net.bytebuddy:byte-buddy:1.14.7")
+
+
+
 }

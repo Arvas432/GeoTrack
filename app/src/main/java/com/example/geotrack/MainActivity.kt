@@ -1,11 +1,14 @@
 package com.example.geotrack
 
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.preference.PreferenceManager
 import android.preference.PreferenceManager.getDefaultSharedPreferences
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.foundation.background
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.foundation.layout.Box
@@ -19,12 +22,15 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -43,6 +49,7 @@ import com.example.geotrack.ui.common_ui_components.MapPin
 import com.example.geotrack.ui.common_ui_components.Settings
 import com.example.geotrack.ui.common_ui_components.SocialIcon
 import com.example.geotrack.ui.profile_creation.ProfileCreation
+import com.example.geotrack.ui.settings.SettingsScreen
 import com.example.geotrack.ui.social.RoutesScreen
 import com.example.geotrack.ui.tracking.TrackingScreen
 import com.example.geotrack.ui.user_profile.ProfileScreen
@@ -169,7 +176,7 @@ fun NavHostContainer(
 ) {
     NavHost(navController, startDestination = startDestination, modifier = modifier) {
         composable("auth_route") { LoginScreen(navController = navController) }
-        composable("settings_route") { SettingsScreen() }
+        composable("settings_route") { SettingsScreenContainer() }
         composable("tracking_route") { TrackingScreen() }
         composable("feed_route") { RoutesScreen() }
         composable("profile_route") { ProfileScreen() }
@@ -177,10 +184,27 @@ fun NavHostContainer(
     }
 }
 
-
 @Composable
-fun SettingsScreen() {
+fun SettingsScreenContainer() {
+    val context = LocalContext.current
+    val isDarkTheme = rememberSaveable { mutableStateOf(false) }
+    SideEffect {
+        AppCompatDelegate.setDefaultNightMode(
+            if (isDarkTheme.value) AppCompatDelegate.MODE_NIGHT_YES
+            else AppCompatDelegate.MODE_NIGHT_NO
+        )
+    }
 
+    SettingsScreen(
+        isDarkTheme = isDarkTheme.value,
+        onThemeToggle = { isDarkTheme.value = it },
+        onSupportClick = {
+            val intent = Intent(Intent.ACTION_SENDTO).apply {
+                data = Uri.parse("mailto:artem.a.baranov@yandex.ru")
+            }
+            context.startActivity(intent)
+        }
+    )
 }
 
 

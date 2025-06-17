@@ -49,7 +49,7 @@ object TrackMapper {
             averageSpeed = dto.averageSpeed,
             gpxData = dto.gpxData,
             likes = dto.likes,
-            image = dto.imageBase64?.let { ImageSerializer.base64ToBitmap(it) }
+            image = dto.image_base64?.let { ImageSerializer.base64ToBitmap(it) }
         )
     }
 
@@ -64,7 +64,7 @@ object TrackMapper {
                 distance = model.distance,
                 averageSpeed = model.averageSpeed,
                 gpxData = model.gpxData,
-                imageBase64 = model.image?.let { ImageSerializer.bitmapToBase64(it) },
+                image_base64 = model.image?.let { ImageSerializer.bitmapToBase64(it) },
             )
         }
     }

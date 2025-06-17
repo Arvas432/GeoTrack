@@ -35,4 +35,7 @@
     <string name="already_have_an_account">Уже есть аккаунт?</string>
     <string name="registration">Регистрация</string>
     <string name="Error">Ошибка</string>
+    <string name="dark_theme">Темная тема</string>
+    <string name="settings">Настройки</string>
+    <string name="message_support">Написать в поддержку</string>
 </resources>
